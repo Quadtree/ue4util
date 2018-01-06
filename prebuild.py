@@ -34,11 +34,10 @@ def fixCppFile(fn):
                         includedFiles.append(m.group(1))
                         lastIncludeLine = ln
 
-                    for m in re.finditer('[A-Za-z0-9]+', l):
+                    for m in re.finditer('[A-Z][A-Za-z0-9]+', l):
                         classes.append(m.group(0))
 
-                    if 'UE_LOG' in l: foundLogStatement = True and (prjName + '.h') not in headersToAdd:
-                        headersToAdd.append(prjName + '.h')
+                    if 'UE_LOG' in l: foundLogStatement = True
 
                     ln += 1
         except Exception as ex:
@@ -48,6 +47,9 @@ def fixCppFile(fn):
     #print(classes)
 
     headersToAdd = []
+
+    if foundLogStatement and (prjName + '.h') not in includedFiles:
+        headersToAdd.append(prjName + '.h')
 
     for clazz in classes:
         header = findClassHeader(clazz)
@@ -65,13 +67,13 @@ def fixCppFile(fn):
         os.rename(fn, bfn)
 
         with open(bfn, 'r') as fr:
-            with open(fn, 'w') as fw:
+            with open(fn, 'w', newline='\n') as fw:
                 ln = 0
 
                 for l in fr:
                     if ln == lastIncludeLine + 1:
                         for header in headersToAdd:
-                            fw.write('#include "' + header + '"\n')
+                            fw.write('#include "' + header.replace('\\', '/') + '"\n')
 
                     fw.write(re.sub('\\s+$', '', l) + '\n')
                     ln += 1
@@ -90,7 +92,7 @@ def scanHeadersIn(dir):
                 with open(fullName) as f:
                     for l in f:
                         if ';' not in l:
-                            for m in re.finditer('class[^:]+([UAF][A-Z][a-z][A-Za-z0-9]+)', l):
+                            for m in re.finditer('class[^:]+\s([A-Z][A-Za-z0-9]+)\s', l):
                                 ret[m.group(1)] = fullName
         except Exception:
             print("Error")
@@ -104,9 +106,11 @@ def findClassHeader(className):
     if headerMap == None:
         headerMap = {}
         for (k,v) in scanHeadersIn(os.path.join(prjDir, 'Source')).items():
-            m = re.match('.+' + prjName + '/(.+)', v)
+            m = re.match('.+' + prjName + '(\\\\|/)(.+)', v)
             if m:
-                headerMap[k] = m.group(1)
+                headerMap[k] = m.group(2)
+
+        print(headerMap)
 
         cacheFileName = os.path.join(prjDir, '.prebuild.cache')
         engineMap = {}

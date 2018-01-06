@@ -2,6 +2,7 @@ import time
 import sys
 import os
 import re
+import pickle
 
 engineDir = sys.argv[2]
 prjDir = sys.argv[1]
@@ -71,13 +72,24 @@ def findClassHeader(className):
             # TODO: Fix me
             headerMap[k] = v.replace(prjDir + '/Source/LandGrab/', '')
 
-        for (k,v) in scanHeadersIn(os.path.join(engineDir, 'Source')).items():
-            m = re.match('.+Public/(.+)', v)
+        cacheFileName = os.path.join(prjDir, '.prebuildcache')
+        engineMap = {}
 
-            if m:
-                headerMap[k] = m.group(1)
+        try:
+            with open(cacheFileName, 'rb') as f: engineMap = pickle.load(f)
+        except Exception as ex:
+            print("Rebuilding engine header cache because " + str(ex))
+            for (k,v) in scanHeadersIn(os.path.join(engineDir, 'Source')).items():
+                m = re.match('.+Public/(.+)', v)
 
-        #TODO: Add in engine classes
+                if m:
+                    engineMap[k] = m.group(1)
+
+            with open(cacheFileName, 'wb') as f:
+                pickle.dump(engineMap, f)
+
+        for (k,v) in engineMap.items():
+            headerMap[k] = v
 
     if className in headerMap:
         return headerMap[className]

@@ -16,10 +16,31 @@ def fixCppFile(fn):
     with open(fn) as f:
         for l in f:
             for m in re.finditer('#include\s+"([^"]+?/([^/"]+))"', l):
-                print(m.group(2))
+                includedFiles.append(m.group(1))
 
             for m in re.finditer('[UAF][A-Z][a-z][A-Za-z0-9]+', l):
-                print(m.group(0))
+                classes.append(m.group(0))
+
+    print(includedFiles)
+    print(classes)
+
+
+def scanHeadersIn(dir):
+    for fn in os.listdir(dir):
+        fullName = os.path.join(dir, fn)
+
+        if os.path.isdir(fullName):
+            fixCppFilesIn(fullName)
+
+        if fullName.endswith('.h'):
+            with open(fn) as f:
+                for l in f:
+                    for m in re.finditer('class[^:]+([UAF][A-Z][a-z][A-Za-z0-9]+)', l):
+                        print("Found: " + m.group(1))
+
+
+def findClassHeader(className):
+    scanHeadersIn(engineDir)
 
 def fixCppFilesIn(dir):
     for fn in os.listdir(dir):

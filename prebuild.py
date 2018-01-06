@@ -23,11 +23,18 @@ def fixCppFile(fn):
             for m in re.finditer('[UAF][A-Z][a-z][A-Za-z0-9]+', l):
                 classes.append(m.group(0))
 
-    print(includedFiles)
-    print(classes)
+    #print(includedFiles)
+    #print(classes)
+
+    headersToAdd = []
 
     for clazz in classes:
-        findClassHeader(clazz)
+        header = findClassHeader(clazz)
+
+        if header and header not in headersToAdd and header not in includedFiles:
+            headersToAdd.append(header)
+
+    print("Headers to add to " + fn + " = " + str(headersToAdd))
 
 
 def scanHeadersIn(dir):
@@ -54,9 +61,15 @@ def findClassHeader(className):
     if headerMap == None:
         headerMap = {}
         for (k,v) in scanHeadersIn(os.path.join(prjDir, 'Source')).items():
+            # TODO: Fix me
             headerMap[k] = v.replace(prjDir + '/Source/LandGrab/', '')
 
-    print(headerMap)
+        #TODO: Add in engine classes
+
+    if className in headerMap:
+        return headerMap[className]
+
+    return None
 
 def fixCppFilesIn(dir):
     for fn in os.listdir(dir):

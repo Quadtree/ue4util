@@ -19,6 +19,8 @@ def fixCppFile(fn):
     classes = []
     lastIncludeLine = -1
 
+    foundLogStatement = False
+
     fns = []
     fns.append(fn.replace('.cpp', '.h'))
     fns.append(fn)
@@ -32,8 +34,11 @@ def fixCppFile(fn):
                         includedFiles.append(m.group(1))
                         lastIncludeLine = ln
 
-                    for m in re.finditer('[UAF][A-Z][a-z][A-Za-z0-9]+', l):
+                    for m in re.finditer('[A-Za-z0-9]+', l):
                         classes.append(m.group(0))
+
+                    if 'UE_LOG' in l: foundLogStatement = True and (prjName + '.h') not in headersToAdd:
+                        headersToAdd.append(prjName + '.h')
 
                     ln += 1
         except Exception as ex:
@@ -54,6 +59,9 @@ def fixCppFile(fn):
         print("Headers to add to " + fn + " = " + str(headersToAdd))
 
         bfn = fn + '.prebuild.bkp'
+        try:
+            os.remove(bfn)
+        except Exception: pass
         os.rename(fn, bfn)
 
         with open(bfn, 'r') as fr:

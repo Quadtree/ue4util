@@ -4,29 +4,39 @@ import os
 import re
 import pickle
 
-engineDir = sys.argv[2]
-prjDir = sys.argv[1]
+targetName = sys.argv[1]
+engineDir = sys.argv[3]
+prjDir = sys.argv[2]
+
+prjName = targetName.replace('Editor', '')
 
 headerMap = None
 
-print("engineDir=" + engineDir + " prjFile=" + prjDir)
+print("prjName=" + prjName + " targetName=" + targetName + " engineDir=" + engineDir + " prjFile=" + prjDir)
 
 def fixCppFile(fn):
     includedFiles = []
     classes = []
     lastIncludeLine = -1
 
-    with open(fn) as f:
-        ln = 0
-        for l in f:
-            for m in re.finditer('#include\s+"([^"]+?/([^/"]+))"', l):
-                includedFiles.append(m.group(1))
-                lastIncludeLine = ln
+    fns = [fn]
+    fns.append(fn.replace('.cpp', '.h'))
 
-            for m in re.finditer('[UAF][A-Z][a-z][A-Za-z0-9]+', l):
-                classes.append(m.group(0))
+    for theFn in fns:
+        try:
+            with open(theFn) as f:
+                ln = 0
+                for l in f:
+                    for m in re.finditer('#include\s+"([^"]+?/?([^/"]+))"', l):
+                        includedFiles.append(m.group(1))
+                        lastIncludeLine = ln
 
-            ln += 1
+                    for m in re.finditer('[UAF][A-Z][a-z][A-Za-z0-9]+', l):
+                        classes.append(m.group(0))
+
+                    ln += 1
+        except Exception as ex:
+            print("Header loader error? " + ex)
 
     #print(includedFiles)
     #print(classes)
@@ -42,6 +52,21 @@ def fixCppFile(fn):
     if headersToAdd:
         print("Headers to add to " + fn + " = " + str(headersToAdd))
 
+        bfn = fn + '.prebuild.bkp'
+        os.rename(fn, bfn)
+
+        with open(bfn, 'r') as fr:
+            with open(fn, 'w') as fw:
+                ln = 0
+
+                for l in fr:
+                    if ln == lastIncludeLine + 1:
+                        for header in headersToAdd:
+                            fw.write('#include "' + header + '"\n')
+
+                    fw.write(re.sub('\\s+$', '', l) + '\n')
+                    ln += 1
+
 
 def scanHeadersIn(dir):
     ret = {}
@@ -55,8 +80,9 @@ def scanHeadersIn(dir):
             if fullName.endswith('.h'):
                 with open(fullName) as f:
                     for l in f:
-                        for m in re.finditer('class[^:]+([UAF][A-Z][a-z][A-Za-z0-9]+)', l):
-                            ret[m.group(1)] = fullName
+                        if ';' not in l:
+                            for m in re.finditer('class[^:]+([UAF][A-Z][a-z][A-Za-z0-9]+)', l):
+                                ret[m.group(1)] = fullName
         except Exception:
             print("Error")
 
@@ -69,10 +95,11 @@ def findClassHeader(className):
     if headerMap == None:
         headerMap = {}
         for (k,v) in scanHeadersIn(os.path.join(prjDir, 'Source')).items():
-            # TODO: Fix me
-            headerMap[k] = v.replace(prjDir + '/Source/LandGrab/', '')
+            m = re.match('.+' + prjName + '/(.+)', v)
+            if m:
+                headerMap[k] = m.group(1)
 
-        cacheFileName = os.path.join(prjDir, '.prebuildcache')
+        cacheFileName = os.path.join(prjDir, '.prebuild.cache')
         engineMap = {}
 
         try:
@@ -80,10 +107,10 @@ def findClassHeader(className):
         except Exception as ex:
             print("Rebuilding engine header cache because " + str(ex))
             for (k,v) in scanHeadersIn(os.path.join(engineDir, 'Source')).items():
-                m = re.match('.+Public/(.+)', v)
+                m = re.match('.+(Public|Classes)/(.+)', v)
 
                 if m:
-                    engineMap[k] = m.group(1)
+                    engineMap[k] = m.group(2)
 
             with open(cacheFileName, 'wb') as f:
                 pickle.dump(engineMap, f)

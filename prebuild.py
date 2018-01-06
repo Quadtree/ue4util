@@ -19,8 +19,9 @@ def fixCppFile(fn):
     classes = []
     lastIncludeLine = -1
 
-    fns = [fn]
+    fns = []
     fns.append(fn.replace('.cpp', '.h'))
+    fns.append(fn)
 
     for theFn in fns:
         try:

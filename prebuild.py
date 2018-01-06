@@ -13,15 +13,19 @@ print("engineDir=" + engineDir + " prjFile=" + prjDir)
 def fixCppFile(fn):
     includedFiles = []
     classes = []
-    lastIncludePoint = -1
+    lastIncludeLine = -1
 
     with open(fn) as f:
+        ln = 0
         for l in f:
             for m in re.finditer('#include\s+"([^"]+?/([^/"]+))"', l):
                 includedFiles.append(m.group(1))
+                lastIncludeLine = ln
 
             for m in re.finditer('[UAF][A-Z][a-z][A-Za-z0-9]+', l):
                 classes.append(m.group(0))
+
+            ln += 1
 
     #print(includedFiles)
     #print(classes)
@@ -34,7 +38,8 @@ def fixCppFile(fn):
         if header and header not in headersToAdd and header not in includedFiles:
             headersToAdd.append(header)
 
-    print("Headers to add to " + fn + " = " + str(headersToAdd))
+    if headersToAdd:
+        print("Headers to add to " + fn + " = " + str(headersToAdd))
 
 
 def scanHeadersIn(dir):

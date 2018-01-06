@@ -45,12 +45,14 @@ def scanHeadersIn(dir):
         if os.path.isdir(fullName):
             for (k,v) in scanHeadersIn(fullName).items():
                 ret[k] = v
-
-        if fullName.endswith('.h'):
-            with open(fullName) as f:
-                for l in f:
-                    for m in re.finditer('class[^:]+([UAF][A-Z][a-z][A-Za-z0-9]+)', l):
-                        ret[m.group(1)] = fullName
+        try:
+            if fullName.endswith('.h'):
+                with open(fullName) as f:
+                    for l in f:
+                        for m in re.finditer('class[^:]+([UAF][A-Z][a-z][A-Za-z0-9]+)', l):
+                            ret[m.group(1)] = fullName
+        except Exception:
+            print("Error")
 
     return ret
 
@@ -63,6 +65,12 @@ def findClassHeader(className):
         for (k,v) in scanHeadersIn(os.path.join(prjDir, 'Source')).items():
             # TODO: Fix me
             headerMap[k] = v.replace(prjDir + '/Source/LandGrab/', '')
+
+        for (k,v) in scanHeadersIn(os.path.join(engineDir, 'Source')).items():
+            m = re.match('.+Public/(.+)', v)
+
+            if m:
+                headerMap[k] = m.group(1)
 
         #TODO: Add in engine classes
 

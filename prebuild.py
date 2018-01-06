@@ -73,7 +73,7 @@ def fixCppFile(fn):
                 for l in fr:
                     if ln == lastIncludeLine + 1:
                         for header in headersToAdd:
-                            fw.write('#include "' + header.replace('\\', '/') + '"\n')
+                            fw.write('#include "' + header + '"\n')
 
                     fw.write(re.sub('\\s+$', '', l) + '\n')
                     ln += 1
@@ -92,8 +92,8 @@ def scanHeadersIn(dir):
                 with open(fullName) as f:
                     for l in f:
                         if ';' not in l:
-                            for m in re.finditer('class[^:]+\s([A-Z][A-Za-z0-9]+)\s', l):
-                                ret[m.group(1)] = fullName
+                            for m in re.finditer('^class[^:]*\s([A-Z][A-Za-z0-9]+)\s', l):
+                                ret[m.group(1)] = fullName.replace('\\', '/')
         except Exception:
             print("Error")
 

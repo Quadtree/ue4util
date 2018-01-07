@@ -3,6 +3,7 @@ import sys
 import os
 import re
 import pickle
+import shutil
 
 targetName = sys.argv[1]
 engineDir = sys.argv[3]
@@ -66,17 +67,26 @@ def fixCppFile(fn):
         except Exception: pass
         os.rename(fn, bfn)
 
-        with open(bfn, 'r') as fr:
-            with open(fn, 'w', newline='\n') as fw:
-                ln = 0
+        try:
+            with open(bfn, 'r') as fr:
+                with open(fn, 'w', newline='\n') as fw:
+                    ln = 0
 
-                for l in fr:
-                    if ln == lastIncludeLine + 1:
-                        for header in headersToAdd:
-                            fw.write('#include "' + header + '"\n')
+                    for l in fr:
+                        if ln == lastIncludeLine + 1:
+                            for header in headersToAdd:
+                                fw.write('#include "' + header + '"\n')
 
-                    fw.write(re.sub('\\s+$', '', l) + '\n')
-                    ln += 1
+                        fw.write(re.sub('\\s+$', '', l) + '\n')
+                        ln += 1
+        except Exception as ex:
+            print("Error saving " + str(ex))
+
+            try:
+                os.remove(fn)
+            except Exception: pass
+
+            shutil.copy(bfn, fn)
 
 
 def scanHeadersIn(dir):
@@ -148,3 +158,4 @@ def fixCppFilesIn(dir):
 
 fixCppFilesIn(os.path.join(prjDir, 'Source'))
 
+print("prebuild complete")

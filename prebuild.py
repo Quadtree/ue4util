@@ -66,7 +66,7 @@ def fixCppFile(fn):
         try:
             os.remove(bfn)
         except Exception: pass
-        os.rename(fn, bfn)
+        shutil.move(fn, bfn)
 
         try:
             with open(bfn, 'r') as fr:

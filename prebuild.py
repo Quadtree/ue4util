@@ -4,6 +4,7 @@ import os
 import re
 import pickle
 import shutil
+import tempfile
 
 targetName = sys.argv[1]
 engineDir = sys.argv[3]
@@ -61,7 +62,7 @@ def fixCppFile(fn):
     if headersToAdd:
         print("Headers to add to " + fn + " = " + str(headersToAdd))
 
-        bfn = fn + '.prebuild.bkp'
+        bfn = os.path.join(tempfile.gettempdir(), os.path.basename(fn) + '.prebuild.bkp')
         try:
             os.remove(bfn)
         except Exception: pass

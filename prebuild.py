@@ -16,30 +16,37 @@ headerMap = None
 
 print("prjName=" + prjName + " targetName=" + targetName + " engineDir=" + engineDir + " prjFile=" + prjDir)
 
-def fixCppFile(fn):
+def fixSourceFile(fn):
     includedFiles = []
     classes = []
     lastIncludeLine = -1
 
     foundLogStatement = False
+    foundWindowsLineEndings = False
+    isCppFile = fn.endswith('.cpp')
 
     fns = []
-    fns.append(fn.replace('.cpp', '.h'))
+    if isCppFile:
+        fns.append(fn.replace('.cpp', '.h'))
+
     fns.append(fn)
 
     for theFn in fns:
         try:
-            with open(theFn) as f:
+            with open(theFn, newline='') as f:
                 ln = 0
                 for l in f:
-                    for m in re.finditer('#include\s+"([^"]+?/?([^/"]+))"', l):
-                        includedFiles.append(m.group(1))
-                        lastIncludeLine = ln
+                    if isCppFile:
+                        for m in re.finditer('#include\s+"([^"]+?/?([^/"]+))"', l):
+                            includedFiles.append(m.group(1))
+                            lastIncludeLine = ln
 
-                    for m in re.finditer('[A-Z][A-Za-z0-9]+', l):
-                        classes.append(m.group(0))
+                        for m in re.finditer('[A-Z][A-Za-z0-9]+', l):
+                            classes.append(m.group(0))
 
-                    if 'UE_LOG' in l: foundLogStatement = True
+                        if 'UE_LOG' in l: foundLogStatement = True
+
+                    if '\r\n' in l: foundWindowsLineEndings = True
 
                     ln += 1
         except Exception as ex:
@@ -59,7 +66,7 @@ def fixCppFile(fn):
         if header and header not in headersToAdd and header not in includedFiles:
             headersToAdd.append(header)
 
-    if headersToAdd:
+    if headersToAdd or foundWindowsLineEndings:
         print("Headers to add to " + fn + " = " + str(headersToAdd))
 
         bfn = os.path.join(tempfile.gettempdir(), os.path.basename(fn) + '.prebuild.bkp')
@@ -147,16 +154,16 @@ def findClassHeader(className):
 
     return None
 
-def fixCppFilesIn(dir):
+def fixSourceFilesIn(dir):
     for fn in os.listdir(dir):
         fullName = os.path.join(dir, fn)
 
         if os.path.isdir(fullName):
-            fixCppFilesIn(fullName)
+            fixSourceFilesIn(fullName)
 
-        if fullName.endswith('.cpp'):
-            fixCppFile(fullName)
+        if fullName.endswith('.cpp') or fullName.endswith('.h'):
+            fixSourceFile(fullName)
 
-fixCppFilesIn(os.path.join(prjDir, 'Source'))
+fixSourceFilesIn(os.path.join(prjDir, 'Source'))
 
 print("prebuild complete")

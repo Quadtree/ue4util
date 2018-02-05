@@ -6,6 +6,40 @@ import pickle
 import shutil
 import tempfile
 
+class ClassMember:
+    def __init__(self, line):
+        self.type = None
+
+        print("LA " + line)
+        m = re.match("//@ ([A-Za-z0-9]+)\\* ([A-Za-z0-9]+)", line)
+        if (m):
+            pass
+
+        m = re.search("\\s*([A-Za-z0-9]+)\\s*\\*\\s*([A-Za-z0-9]+)::([A-Za-z0-9]+)\\s*\\(([^)]*)\\)", line)
+        if (m):
+            print(m)
+
+def findMembersInCppFile(fn):
+    members = []
+    print(fn)
+
+    try:
+        with open(fn) as f:
+            for l in f:
+                if (re.match("\\S.+", l)):
+                    newMember = ClassMember(l)
+
+                    if newMember.type != None:
+                        members.append(newMember)
+    except Exception as ex:
+        print("Error parsing CPP: " + str(ex))
+
+
+    print(members)
+    sys.exit()
+    return members
+
+
 targetName = sys.argv[1]
 engineDir = sys.argv[3]
 prjDir = sys.argv[2]
@@ -23,11 +57,17 @@ def fixSourceFile(fn):
 
     foundLogStatement = False
     foundWindowsLineEndings = False
+    foundTrailingWhitespace = False
     isCppFile = fn.endswith('.cpp')
 
     fns = []
     if isCppFile:
         fns.append(fn.replace('.cpp', '.h'))
+
+        findMembersInCppFile(fn)
+
+
+
 
     fns.append(fn)
 
@@ -47,10 +87,14 @@ def fixSourceFile(fn):
                         if 'UE_LOG' in l: foundLogStatement = True
 
                     if '\r\n' in l: foundWindowsLineEndings = True
+                    if re.match('[\\t ]\\s*$', l):
+                        foundTrailingWhitespace = True
+                        print("Found trailing whitespace in " + fn)
+
 
                     ln += 1
         except Exception as ex:
-            print("Header loader error? " + ex)
+            print("Header loader error? " + str(ex))
 
     #print(includedFiles)
     #print(classes)
@@ -66,7 +110,7 @@ def fixSourceFile(fn):
         if header and header not in headersToAdd and header not in includedFiles:
             headersToAdd.append(header)
 
-    if headersToAdd or foundWindowsLineEndings:
+    if headersToAdd or foundWindowsLineEndings or foundTrailingWhitespace:
         print("Headers to add to " + fn + " = " + str(headersToAdd))
 
         bfn = os.path.join(tempfile.gettempdir(), os.path.basename(fn) + '.prebuild.bkp')

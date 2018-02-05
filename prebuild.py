@@ -7,17 +7,47 @@ import shutil
 import tempfile
 
 class ClassMember:
-    def __init__(self, line):
-        self.type = None
+    def __init__(self, typ, cppType, name, mods = None, args = None):
+        self.type = typ
+        self.cppType = cppType
+        self.name = name
+        if mods:
+            self.mods = mods
+        else:
+            self.mods = ''
+        self.args = args
 
-        print("LA " + line)
+    def createFromLine(line):
         m = re.match("//@ ([A-Za-z0-9]+)\\* ([A-Za-z0-9]+)", line)
         if (m):
             pass
 
-        m = re.search("\\s*([A-Za-z0-9]+)\\s*\\*\\s*([A-Za-z0-9]+)::([A-Za-z0-9]+)\\s*\\(([^)]*)\\)", line)
+        m = re.search("\\s*([A-Za-z0-9 *]+)\\s+([A-Za-z0-9]+)::([A-Za-z0-9]+)\\s*\\(([^)]*)\\)\\s*(//@ (.+))?", line)
         if (m):
-            print(m)
+            return ClassMember('FUNCTION', m.group(1), m.group(3), m.group(5), m.group(4))
+
+    def transformArgToHeader(arg):
+        if 'class' in arg or 'struct' in arg: return arg
+
+        if (len(arg) == 0): return arg
+
+        if arg[0] == 'F':
+            return 'struct ' + arg
+        elif arg[0] == 'U':
+            return 'class ' + arg
+
+        return arg
+
+    def render(self):
+        parts = [ClassMember.transformArgToHeader(x.strip()) for x in self.args.split(',')]
+
+        if (self.type == 'FUNCTION'):
+            return '\tUFUNCTION(' + str(self.mods) + ')\n\t' + self.cppType + ' ' + self.name + '(' + ', '.join(parts) + ');\n'
+
+    def __str__(self):
+        return self.render()
+
+
 
 def findMembersInCppFile(fn):
     members = []
@@ -27,15 +57,16 @@ def findMembersInCppFile(fn):
         with open(fn) as f:
             for l in f:
                 if (re.match("\\S.+", l)):
-                    newMember = ClassMember(l)
+                    newMember = ClassMember.createFromLine(l)
 
-                    if newMember.type != None:
+                    if newMember:
                         members.append(newMember)
     except Exception as ex:
         print("Error parsing CPP: " + str(ex))
 
 
-    print(members)
+    for m in members:
+        print(m.render())
     sys.exit()
     return members
 

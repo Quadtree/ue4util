@@ -7,24 +7,27 @@ import shutil
 import tempfile
 
 class ClassMember:
-    def __init__(self, typ, cppType, name, mods = None, args = None):
+    def __init__(self, typ, cppType, name, access, className = None, mods = None, args = None):
         self.type = typ
         self.cppType = cppType
         self.name = name
-        if mods:
-            self.mods = mods
-        else:
-            self.mods = ''
+
+        modList = []
+        if mods: modList = [x.strip() for x in mods.split(',')]
+        modList.append('BlueprintCallable')
+        self.mods = ', '.join(modList)
         self.args = args
+        self.className = className
+        self.access = access
 
     def createFromLine(line):
         m = re.match("//@ ([A-Za-z0-9]+)\\* ([A-Za-z0-9]+)", line)
         if (m):
             pass
 
-        m = re.search("\\s*([A-Za-z0-9 *]+)\\s+([A-Za-z0-9]+)::([A-Za-z0-9]+)\\s*\\(([^)]*)\\)\\s*(//@ (.+))?", line)
+        m = re.search("\\s*([A-Za-z0-9 *]+)\\s+([A-Za-z0-9]+)::([A-Za-z0-9]+)\\s*\\(([^)]*)\\)\\s*(//@(-)? (.+))?", line)
         if (m):
-            return ClassMember('FUNCTION', m.group(1), m.group(3), m.group(5), m.group(4))
+            return ClassMember('FUNCTION', m.group(1), m.group(3), 'private' if m.group(5) else 'public', m.group(2), m.group(6), m.group(4))
 
     def transformArgToHeader(arg):
         if 'class' in arg or 'struct' in arg: return arg
@@ -53,6 +56,10 @@ def findMembersInCppFile(fn):
     members = []
     print(fn)
 
+    className = None
+
+    extends = []
+
     try:
         with open(fn) as f:
             for l in f:
@@ -61,12 +68,45 @@ def findMembersInCppFile(fn):
 
                     if newMember:
                         members.append(newMember)
+                        if (newMember.className):
+                            className = newMember.className
+
+                m = re.match("//@\\s+extends\\s+([A-Za-z0-9]+)", l)
+                if m:
+                    extends = [x.strip() for x in m.group(1).split(' ')]
     except Exception as ex:
         print("Error parsing CPP: " + str(ex))
 
+    print('extends ' + ', '.join(extends))
+
+    if className[0] == 'F':
+        classType = 'struct'
+    else:
+        classType = 'class'
+
+    ret = '#pragma once\n\n'
+    ret += '#include "EngineMinimal.h"\n'
+    for ext in extends:
+        ret += '#include "' + findClassHeader(ext) + '"\n'
+    ret += '#include "' + className[1:] + '.generated.h"\n'
+
+    ret += '\n'
+    ret += 'U' + classType.upper() + '()\n'
+    ret += classType + ' _API ' + className + ' : public ' + ', '.join(extends) + '\n'
+    ret += '{\n'
+    ret += '\tGENERATED_BODY()\n'
+    lastProtLevel = ''
+
+    members.sort(key=lambda x: x.access)
 
     for m in members:
-        print(m.render())
+        if m.access != lastProtLevel:
+            ret += (m.access + ':\n')
+            lastProtLevel = m.access
+        ret += m.render() + '\n'
+
+    ret += '};\n'
+    print(ret)
     sys.exit()
     return members
 

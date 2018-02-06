@@ -167,8 +167,13 @@ def findMembersInCppFile(fn):
             if not setterName in memberNames:
                 getterSetterImpls += 'void {className}::{setterName}({retTyp} value){{ {name} = value; }}\n'.format(retTyp=mem.cppType, className=className, setterName=setterName, name=mem.name)
 
-
     print('extends ' + ', '.join(extends))
+
+    defDependentClasses = list(extends)
+    for mem in members:
+        if mem.cppType and mem.cppType[0] == mem.cppType[0].upper() and not '*' in mem.cppType: defDependentClasses.append(mem.cppType)
+
+    print('defDependentClasses={defDependentClasses}'.format(defDependentClasses=defDependentClasses))
 
     if className[0] == 'F':
         classType = 'struct'
@@ -179,7 +184,7 @@ def findMembersInCppFile(fn):
 
     ret = '#pragma once\n\n'
     ret += '#include "EngineMinimal.h"\n'
-    for ext in extends:
+    for ext in defDependentClasses:
         try:
             ret += '#include "' + findClassHeader(ext) + '"\n'
         except Exception as ex:
@@ -320,7 +325,7 @@ def scanHeadersIn(dir):
                 with open(fullName) as f:
                     for l in f:
                         if ';' not in l:
-                            for m in re.finditer('^class[^:]*\s([A-Z][A-Za-z0-9]+)\s', l):
+                            for m in re.finditer('^(?:class|struct)[^:]*\s([A-Z][A-Za-z0-9]+)\s', l):
                                 ret[m.group(1)] = fullName.replace('\\', '/')
         except Exception:
             print("Error")

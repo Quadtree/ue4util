@@ -19,6 +19,7 @@ class ClassMember:
         self.isConst = isConst
         self.generateGetter = 'G' in access
         self.generateSetter = 'S' in access
+        self.access = access.replace('G', '').replace('S', '')
 
         if not mods: mods = ''
 
@@ -32,10 +33,14 @@ class ClassMember:
             if not 'BlueprintPure' in mods:
                 modList.append('BlueprintCallable')
 
+            if (self.access == 'private' and 'BlueprintCallable' in modList):
+                modList.remove('BlueprintCallable')
+
+
         self.mods = ', '.join(modList)
         self.args = args
         self.className = className
-        self.access = access.replace('G', '').replace('S', '')
+
 
 
 

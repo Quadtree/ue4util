@@ -7,7 +7,7 @@ import shutil
 import tempfile
 
 class ClassMember:
-    def __init__(self, typ, cppType, name, access, isConst, className = None, mods = None, args = None):
+    def __init__(self, typ, cppType, name, access, isConst, className = None, mods = None, args = None, bare=False):
         self.type = str(typ)
         self.cppType = cppType
         self.name = name
@@ -38,13 +38,11 @@ class ClassMember:
         self.mods = ', '.join(modList)
         self.args = args
         self.className = className
-
-
-
-
+        self.bare = bare
+        print('bare={bare}'.format(bare=bare))
 
     def createFromLine(line):
-        m = re.match("prop\\(((?P<protLevel>pri|pub|prot)\\s+)?(?P<typ>[A-Za-z0-9 *<>,]+)\\s+(?P<name>[A-Za-z0-9*]+)\\)", line)
+        m = re.match("prop\\((?P<bare>bare\\s+)?((?P<protLevel>pri|pub|prot)\\s+)?(?P<typ>[A-Za-z0-9 *<>,]+)\\s+(?P<name>[A-Za-z0-9*]+)\\)", line)
         if (m):
             return ClassMember(
                 typ='PROPERTY',
@@ -54,9 +52,10 @@ class ClassMember:
                 isConst=False,
                 className='Class',
                 mods=None,
-                args=None)
+                args=None,
+                bare=True if m.group('bare') else False)
 
-        m = re.search("(?P<protLevel>pri|pub|prot)?\\s*((?P<retTyp>[A-Za-z0-9 *<>,]+)?\\s+)?fun::(?P<funcName>[A-Za-z0-9]+)\\s*\\((?P<args>[^)]*)\\)(\\s+mods\\((?P<mods>[^)]+)\\))?", line)
+        m = re.search("(?P<bare>bare\\s+)?(?P<protLevel>pri|pub|prot)?\\s*((?P<retTyp>[A-Za-z0-9 *<>,]+)?\\s+)?fun::(?P<funcName>[A-Za-z0-9]+)\\s*\\((?P<args>[^)]*)\\)(\\s+mods\\((?P<mods>[^)]+)\\))?", line)
         if (m):
             print('cppType=' + str(m.group('retTyp')))
             return ClassMember(
@@ -67,7 +66,8 @@ class ClassMember:
                 isConst=False,
                 className='Class',
                 mods=m.group('mods'),
-                args=m.group('args'))
+                args=m.group('args'),
+                bare=True if m.group('bare') else False)
 
     def transformArgToHeader(arg):
         if 'class' in arg or 'struct' in arg: return arg
@@ -91,10 +91,10 @@ class ClassMember:
             except Exception:
                 parts = []
 
-            return (('\tUFUNCTION(' + str(self.mods) + ')\n') if self.cppType else '') + '\t' + (str(self.cppType) + ' ' if self.cppType else '') + str(self.name) + '(' + ', '.join(parts) + ')' + (' const' if self.isConst else '') + ';\n'
+            return (('\tUFUNCTION(' + str(self.mods) + ')\n') if self.cppType and not self.bare else '') + '\t' + (str(self.cppType) + ' ' if self.cppType else '') + str(self.name) + '(' + ', '.join(parts) + ')' + (' const' if self.isConst else '') + ';\n'
         elif self.type == 'PROPERTY':
             ret = ''
-            if self.cppType[0] != 'F':
+            if self.cppType[0] != 'F' and not self.bare:
                 ret += '\tUPROPERTY({mods})\n'.format(mods=self.mods)
 
             ret += '\t{cppType} {name};\n'.format(cppType=self.cppType, name=self.name)
@@ -224,6 +224,7 @@ def findMembersInCppFile(fn):
 #define pub
 #define pri
 #define prot
+#define bare
 #define prop(...)
 #define extends(...)
 #define fun         {className}

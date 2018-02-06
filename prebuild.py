@@ -35,9 +35,18 @@ class ClassMember:
         if (m):
             pass
 
-        m = re.search("(private|public|protected)?\\s*([A-Za-z0-9 *]+)?\\s*([A-Za-z0-9]+)::([A-Za-z0-9]+)\\s*\\(([^)]*)\\)(\\s+const)?", line)
+        m = re.search("(?P<protLevel>private|public|protected)?\\s*((?P<retTyp>[A-Za-z0-9 *]+)?\\s+)?fun::(?P<funcName>[A-Za-z0-9]+)\\s*\\((?P<args>[^)]*)\\)(?P<isConst>\\s+const)?", line)
         if (m):
-            return ClassMember('FUNCTION', m.group(2), m.group(4), m.group(1) if m.group(1) else 'public', True if m.group(6) else False, m.group(3), None, m.group(5))
+            print('cppType=' + str(m.group('retTyp')))
+            return ClassMember(
+                typ='FUNCTION',
+                cppType=m.group('retTyp'),
+                name=m.group('funcName'),
+                access=m.group('protLevel') if m.group('protLevel') else 'public',
+                isConst=True if m.group('isConst') else False,
+                className='Class',
+                mods=None,
+                args=m.group('args'))
 
     def transformArgToHeader(arg):
         if 'class' in arg or 'struct' in arg: return arg
@@ -57,7 +66,7 @@ class ClassMember:
         parts = [ClassMember.transformArgToHeader(x.strip()) for x in self.args.split(',')]
 
         if (self.type == 'FUNCTION'):
-            return '\tUFUNCTION(' + str(self.mods) + ')\n\t' + self.cppType + ' ' + self.name + '(' + ', '.join(parts) + ');\n'
+            return (('\tUFUNCTION(' + str(self.mods) + ')\n') if self.cppType else '') + '\t' + (str(self.cppType) + ' ' if self.cppType else '') + str(self.name) + '(' + ', '.join(parts) + ');\n'
 
     def __str__(self):
         return self.render()

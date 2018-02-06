@@ -46,7 +46,9 @@ class ClassMember:
 
         if arg[0] == 'F':
             return 'struct ' + arg
-        elif arg[0] == 'U':
+        elif arg[0] in ['E']:
+            return 'enum ' + arg
+        elif arg[0] in ['U', 'A']:
             return 'class ' + arg
 
         return arg

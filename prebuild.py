@@ -28,7 +28,7 @@ class ClassMember:
                 modList.append('BlueprintReadWrite')
 
         if self.type == 'FUNCTION':
-            if not 'BlueprintPure' in mods:
+            if not 'BlueprintPure' in mods and not 'BlueprintImplementableEvent' in mods:
                 modList.append('BlueprintCallable')
 
             if (self.access == 'private' and 'BlueprintCallable' in modList):
@@ -93,7 +93,12 @@ class ClassMember:
 
             return (('\tUFUNCTION(' + str(self.mods) + ')\n') if self.cppType else '') + '\t' + (str(self.cppType) + ' ' if self.cppType else '') + str(self.name) + '(' + ', '.join(parts) + ')' + (' const' if self.isConst else '') + ';\n'
         elif self.type == 'PROPERTY':
-            return '\tUPROPERTY({mods})\n\t{cppType} {name};\n'.format(mods=self.mods, cppType=self.cppType, name=self.name)
+            ret = ''
+            if self.cppType[0] != 'F':
+                ret += '\tUPROPERTY({mods})\n'.format(mods=self.mods)
+
+            ret += '\t{cppType} {name};\n'.format(cppType=self.cppType, name=self.name)
+            return ret
 
 
     def __str__(self):
@@ -137,9 +142,9 @@ def findMembersInCppFile(fn):
                         if newMember:
                             members.append(newMember)
 
-                    m = re.match("//@\\s+extends\\s+([A-Za-z0-9]+)", l)
+                    m = re.match('blueprintEvent\\((?P<event>[^)]+)\\)', l)
                     if m:
-                        extends = [x.strip() for x in m.group(1).split(' ')]
+                        members.append(ClassMember('FUNCTION', cppType='void', name=m.group(1), access='pub', isConst=False, mods='BlueprintImplementableEvent'))
     except Exception as ex:
         print("Error parsing CPP: " + str(ex))
 
@@ -210,6 +215,7 @@ def findMembersInCppFile(fn):
     pbt = """
 #define mods(...)
 #define im(...)
+#define blueprintEvent(...)
 #define pub
 #define pri
 #define prot

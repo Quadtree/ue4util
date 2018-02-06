@@ -69,7 +69,7 @@ def findMembersInCppFile(fn):
     try:
         with open(fn) as f:
             for l in f:
-                if (re.match('extends\\s*\\(([^)]+)\\)')):
+                if (re.match('extends\\s*\\(([^)]+)\\)', l)):
                     isClassFile = True
 
                 if isClassFile:

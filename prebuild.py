@@ -16,14 +16,19 @@ class ClassMember:
         self.type = typ
         self.cppType = cppType
         self.name = name
+        self.isConst = isConst
 
         modList = []
         if mods: modList = [x.strip() for x in mods.split(',')]
-        modList.append('BlueprintCallable')
+        if not isConst:
+            modList.append('BlueprintCallable')
+        else:
+            modList.append('BlueprintPure')
         self.mods = ', '.join(modList)
         self.args = args
         self.className = className
         self.access = access
+
 
     def createFromLine(line):
         m = re.match("//@ ([A-Za-z0-9]+)\\* ([A-Za-z0-9]+)", line)

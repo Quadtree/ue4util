@@ -87,7 +87,10 @@ class ClassMember:
 
     def render(self):
         if (self.type == 'FUNCTION'):
-            parts = [ClassMember.transformArgToHeader(x.strip()) for x in self.args.split(',')]
+            try:
+                parts = [ClassMember.transformArgToHeader(x.strip()) for x in self.args.split(',')]
+            except Exception:
+                parts = []
 
             return (('\tUFUNCTION(' + str(self.mods) + ')\n') if self.cppType else '') + '\t' + (str(self.cppType) + ' ' if self.cppType else '') + str(self.name) + '(' + ', '.join(parts) + ')' + (' const' if self.isConst else '') + ';\n'
         elif self.type == 'PROPERTY':
@@ -105,12 +108,12 @@ def findMembersInCppFile(fn):
 
     tfn = fn.replace('Private', 'Public').replace('.cpp', '.h')
 
-    try:
+    """try:
         if os.path.getmtime(fn) < os.path.getmtime(tfn):
             print('{fn} is not altered'.format(fn=fn))
             return False
     except Exception as ex:
-        print("Error getting mtime: {ex}".format(ex=ex))
+        print("Error getting mtime: {ex}".format(ex=ex))"""
 
     className = re.search('([A-Z0-9a-z]+)\\.cpp', fn).group(1)
 
@@ -141,6 +144,10 @@ def findMembersInCppFile(fn):
         print("Error parsing CPP: " + str(ex))
 
     if not isClassFile: return None
+
+    for mem in members:
+        if mem.generateGetter:
+            members.append(ClassMember('FUNCTION', cppType=mem.cppType, name='Get' + mem.name, access='public', isConst=False))
 
     print('extends ' + ', '.join(extends))
 

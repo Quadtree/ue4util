@@ -6,6 +6,11 @@ import pickle
 import shutil
 import tempfile
 
+# To add:
+# Fields
+# Header generation
+# Getter/setter generation
+
 class ClassMember:
     def __init__(self, typ, cppType, name, access, className = None, mods = None, args = None):
         self.type = typ
@@ -59,23 +64,30 @@ def findMembersInCppFile(fn):
     className = None
 
     extends = []
+    isClassFile = False
 
     try:
         with open(fn) as f:
             for l in f:
-                if (re.match("\\S.+", l)):
-                    newMember = ClassMember.createFromLine(l)
+                if (re.match('extends\\s*\\(([^)]+)\\)')):
+                    isClassFile = True
 
-                    if newMember:
-                        members.append(newMember)
-                        if (newMember.className):
-                            className = newMember.className
+                if isClassFile:
+                    if (re.match("\\S.+", l)):
+                        newMember = ClassMember.createFromLine(l)
 
-                m = re.match("//@\\s+extends\\s+([A-Za-z0-9]+)", l)
-                if m:
-                    extends = [x.strip() for x in m.group(1).split(' ')]
+                        if newMember:
+                            members.append(newMember)
+                            if (newMember.className):
+                                className = newMember.className
+
+                    m = re.match("//@\\s+extends\\s+([A-Za-z0-9]+)", l)
+                    if m:
+                        extends = [x.strip() for x in m.group(1).split(' ')]
     except Exception as ex:
         print("Error parsing CPP: " + str(ex))
+
+    if not isClassFile: return None
 
     print('extends ' + ', '.join(extends))
 
@@ -92,7 +104,7 @@ def findMembersInCppFile(fn):
 
     ret += '\n'
     ret += 'U' + classType.upper() + '()\n'
-    ret += classType + ' _API ' + className + ' : public ' + ', '.join(extends) + '\n'
+    ret += classType + ' ' + prjName.upper() + '_API ' + className + ' : public ' + ', '.join(extends) + '\n'
     ret += '{\n'
     ret += '\tGENERATED_BODY()\n'
     lastProtLevel = ''

@@ -35,7 +35,7 @@ class ClassMember:
         if (m):
             pass
 
-        m = re.search("(private|public|protected)?\\s*([A-Za-z0-9 *]+)\\s+([A-Za-z0-9]+)::([A-Za-z0-9]+)\\s*\\(([^)]*)\\)(\\s+const)?", line)
+        m = re.search("(private|public|protected)?\\s*([A-Za-z0-9 *]+)?\\s*([A-Za-z0-9]+)::([A-Za-z0-9]+)\\s*\\(([^)]*)\\)(\\s+const)?", line)
         if (m):
             return ClassMember('FUNCTION', m.group(2), m.group(4), m.group(1) if m.group(1) else 'public', True if m.group(6) else False, m.group(3), None, m.group(5))
 

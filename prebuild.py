@@ -66,7 +66,7 @@ class ClassMember:
         parts = [ClassMember.transformArgToHeader(x.strip()) for x in self.args.split(',')]
 
         if (self.type == 'FUNCTION'):
-            return (('\tUFUNCTION(' + str(self.mods) + ')\n') if self.cppType else '') + '\t' + (str(self.cppType) + ' ' if self.cppType else '') + str(self.name) + '(' + ', '.join(parts) + ');\n'
+            return (('\tUFUNCTION(' + str(self.mods) + ')\n') if self.cppType else '') + '\t' + (str(self.cppType) + ' ' if self.cppType else '') + str(self.name) + '(' + ', '.join(parts) + ')' + (' const' if self.isConst else '') + ';\n'
 
     def __str__(self):
         return self.render()

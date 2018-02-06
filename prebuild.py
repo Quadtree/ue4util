@@ -12,7 +12,7 @@ import tempfile
 # Getter/setter generation
 
 class ClassMember:
-    def __init__(self, typ, cppType, name, access, className = None, mods = None, args = None):
+    def __init__(self, typ, cppType, name, access, isConst, className = None, mods = None, args = None):
         self.type = typ
         self.cppType = cppType
         self.name = name
@@ -30,9 +30,9 @@ class ClassMember:
         if (m):
             pass
 
-        m = re.search("\\s*([A-Za-z0-9 *]+)\\s+([A-Za-z0-9]+)::([A-Za-z0-9]+)\\s*\\(([^)]*)\\)\\s*(//@(-)? (.+))?", line)
+        m = re.search("\\s*([A-Za-z0-9 *]+)\\s+([A-Za-z0-9]+)::([A-Za-z0-9]+)\\s*\\(([^)]*)\\)(\\s+const)", line)
         if (m):
-            return ClassMember('FUNCTION', m.group(1), m.group(3), 'private' if m.group(5) else 'public', m.group(2), m.group(6), m.group(4))
+            return ClassMember('FUNCTION', m.group(1), m.group(3), 'public', True if m.group(5) else False, m.group(2), None, m.group(4))
 
     def transformArgToHeader(arg):
         if 'class' in arg or 'struct' in arg: return arg

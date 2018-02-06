@@ -18,12 +18,12 @@ class ClassMember:
         self.name = name
         self.isConst = isConst
 
+        if not mods: mods = ''
+
         modList = []
-        if mods: modList = [x.strip() for x in mods.split(',')]
-        if not isConst:
+        if mods: modList = [x.strip() for x in mods.split(' ')]
+        if not 'BlueprintPure' in mods:
             modList.append('BlueprintCallable')
-        else:
-            modList.append('BlueprintPure')
         self.mods = ', '.join(modList)
         self.args = args
         self.className = className
@@ -35,7 +35,9 @@ class ClassMember:
         if (m):
             pass
 
-        m = re.search("(?P<protLevel>private|public|protected)?\\s*((?P<retTyp>[A-Za-z0-9 *]+)?\\s+)?fun::(?P<funcName>[A-Za-z0-9]+)\\s*\\((?P<args>[^)]*)\\)(?P<isConst>\\s+const)?", line)
+        # (\\s+mods\\((?P<mods>[^)]+)\\))?
+
+        m = re.search("(?P<protLevel>private|public|protected)?\\s*((?P<retTyp>[A-Za-z0-9 *]+)?\\s+)?fun::(?P<funcName>[A-Za-z0-9]+)\\s*\\((?P<args>[^)]*)\\)(\\s+mods\\((?P<mods>[^)]+)\\))?", line)
         if (m):
             print('cppType=' + str(m.group('retTyp')))
             return ClassMember(
@@ -43,9 +45,9 @@ class ClassMember:
                 cppType=m.group('retTyp'),
                 name=m.group('funcName'),
                 access=m.group('protLevel') if m.group('protLevel') else 'public',
-                isConst=True if m.group('isConst') else False,
+                isConst=False,
                 className='Class',
-                mods=None,
+                mods=m.group('mods'),
                 args=m.group('args'))
 
     def transformArgToHeader(arg):
@@ -149,6 +151,7 @@ def findMembersInCppFile(fn):
     tfn = fn.replace('Private', 'Public').replace('.cpp', '.prebuild.h')
 
     pbt = """
+#define mods(x)
 #define public
 #define private
 #define protected

@@ -146,7 +146,7 @@ def findMembersInCppFile(fn):
 #define prop(x)
 #define extends(x)
 #define fun         {className}
-    """
+""".format(className=className)
 
 
     with open(tfn, 'w', newline='') as f:
@@ -175,12 +175,7 @@ def fixSourceFile(fn):
 
     fns = []
     if isCppFile:
-        fns.append(fn.replace('.cpp', '.h'))
-
         findMembersInCppFile(fn)
-
-
-
 
     fns.append(fn)
 
@@ -214,44 +209,22 @@ def fixSourceFile(fn):
 
     headersToAdd = []
 
-    if foundLogStatement and (prjName + '.h') not in includedFiles:
+    if foundLogStatement and (prjName + '.h'):
         headersToAdd.append(prjName + '.h')
 
     for clazz in classes:
         header = findClassHeader(clazz)
 
-        if header and header not in headersToAdd and header not in includedFiles:
+        if header and header not in headersToAdd and header:
             headersToAdd.append(header)
 
-    if headersToAdd or foundWindowsLineEndings or foundTrailingWhitespace:
-        print("Headers to add to " + fn + " = " + str(headersToAdd))
+    if headersToAdd:
+        tfn = fn.replace('Private', 'Public').replace('.cpp', '.prebuild.h')
 
-        bfn = os.path.join(tempfile.gettempdir(), os.path.basename(fn) + '.prebuild.bkp')
-        try:
-            os.remove(bfn)
-        except Exception: pass
-        shutil.move(fn, bfn)
-
-        try:
-            with open(bfn, 'r') as fr:
-                with open(fn, 'w', newline='\n') as fw:
-                    ln = 0
-
-                    for l in fr:
-                        if ln == lastIncludeLine + 1:
-                            for header in headersToAdd:
-                                fw.write('#include "' + header + '"\n')
-
-                        fw.write(re.sub('\\s+$', '', l) + '\n')
-                        ln += 1
-        except Exception as ex:
-            print("Error saving " + str(ex))
-
-            try:
-                os.remove(fn)
-            except Exception: pass
-
-            shutil.copy(bfn, fn)
+        if (os.path.exists(tfn)):
+            with open(tfn, 'a', newline='') as f:
+                for header in headersToAdd:
+                    f.write('#include "{header}"\n'.format(header=header))
 
 
 def scanHeadersIn(dir):

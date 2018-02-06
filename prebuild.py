@@ -103,6 +103,15 @@ def findMembersInCppFile(fn):
     members = []
     print(fn)
 
+    tfn = fn.replace('Private', 'Public').replace('.cpp', '.h')
+
+    try:
+        if os.path.getmtime(fn) < os.path.getmtime(tfn):
+            print('{fn} is not altered'.format(fn=fn))
+            return False
+    except Exception as ex:
+        print("Error getting mtime: {ex}".format(ex=ex))
+
     className = re.search('([A-Z0-9a-z]+)\\.cpp', fn).group(1)
 
     extends = []
@@ -166,7 +175,7 @@ def findMembersInCppFile(fn):
     ret += '};\n'
     print(ret)
 
-    tfn = fn.replace('Private', 'Public').replace('.cpp', '.h')
+
     print(tfn)
 
     with open(tfn, 'w', newline='') as f:
@@ -187,6 +196,8 @@ def findMembersInCppFile(fn):
 
     with open(tfn, 'w', newline='') as f:
         f.write(pbt)
+
+    return True
 
 
 targetName = sys.argv[1]
@@ -211,7 +222,8 @@ def fixSourceFile(fn):
 
     fns = []
     if isCppFile:
-        findMembersInCppFile(fn)
+        if not findMembersInCppFile(fn):
+            return
 
     fns.append(fn)
 

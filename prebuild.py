@@ -41,7 +41,7 @@ class ClassMember:
 
 
     def createFromLine(line):
-        m = re.match("prop\\(((?P<protLevel>pri|pub|prot)\\s+)?(?P<typ>[A-Za-z0-9*]+)\\s+(?P<name>[A-Za-z0-9*]+)\\)", line)
+        m = re.match("prop\\(((?P<protLevel>pri|pub|prot)\\s+)?(?P<typ>[A-Za-z0-9 *<>,]+)\\s+(?P<name>[A-Za-z0-9*]+)\\)", line)
         if (m):
             return ClassMember(
                 typ='PROPERTY',
@@ -53,7 +53,7 @@ class ClassMember:
                 mods=None,
                 args=None)
 
-        m = re.search("(?P<protLevel>pri|pub|prot)?\\s*((?P<retTyp>[A-Za-z0-9 *]+)?\\s+)?fun::(?P<funcName>[A-Za-z0-9]+)\\s*\\((?P<args>[^)]*)\\)(\\s+mods\\((?P<mods>[^)]+)\\))?", line)
+        m = re.search("(?P<protLevel>pri|pub|prot)?\\s*((?P<retTyp>[A-Za-z0-9 *<>,]+)?\\s+)?fun::(?P<funcName>[A-Za-z0-9]+)\\s*\\((?P<args>[^)]*)\\)(\\s+mods\\((?P<mods>[^)]+)\\))?", line)
         if (m):
             print('cppType=' + str(m.group('retTyp')))
             return ClassMember(
@@ -71,12 +71,13 @@ class ClassMember:
 
         if (len(arg) == 0): return arg
 
-        if arg[0] == 'F':
-            return 'struct ' + arg
-        elif arg[0] in ['E']:
-            return 'enum ' + arg
-        elif arg[0] in ['U', 'A']:
-            return 'class ' + arg
+        if '*' in arg:
+            if arg[0] == 'F':
+                return 'struct ' + arg
+            elif arg[0] in ['E']:
+                return 'enum ' + arg
+            elif arg[0] in ['U', 'A']:
+                return 'class ' + arg
 
         return arg
 
@@ -171,7 +172,10 @@ def findMembersInCppFile(fn):
     ret = '#pragma once\n\n'
     ret += '#include "EngineMinimal.h"\n'
     for ext in extends:
-        ret += '#include "' + findClassHeader(ext) + '"\n'
+        try:
+            ret += '#include "' + findClassHeader(ext) + '"\n'
+        except Exception as ex:
+            print("Can't find header for class {name}: {ex}".format(name=ext, ex=ex))
     ret += '#include "' + className[1:] + '.generated.h"\n'
 
     ret += '\n'
@@ -201,13 +205,13 @@ def findMembersInCppFile(fn):
     tfn = fn.replace('Private', 'Public').replace('.cpp', '.prebuild.h')
 
     pbt = """
-#define mods(x)
-#define im(x)
+#define mods(...)
+#define im(...)
 #define pub
 #define pri
 #define prot
-#define prop(x)
-#define extends(x)
+#define prop(...)
+#define extends(...)
 #define fun         {className}
 {getterSetterImpls}
 """.format(className=className, getterSetterImpls=getterSetterImpls)

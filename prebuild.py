@@ -61,7 +61,7 @@ def findMembersInCppFile(fn):
     members = []
     print(fn)
 
-    className = None
+    className = re.search('([A-Z0-9a-z]+)\\.cpp', fn).group(1)
 
     extends = []
     isClassFile = False
@@ -69,7 +69,11 @@ def findMembersInCppFile(fn):
     try:
         with open(fn) as f:
             for l in f:
-                if (re.match('extends\\s*\\(([^)]+)\\)', l)):
+                m = re.match('extends\\s*\\(([^)]+)\\)', l)
+                if m:
+                    if m.group(1)[0] in ['U', 'E', 'F', 'T', 'A']:
+                        className = m.group(1)[0] + className
+                    extends = m.group(1).split(' ')
                     isClassFile = True
 
                 if isClassFile:
@@ -78,8 +82,6 @@ def findMembersInCppFile(fn):
 
                         if newMember:
                             members.append(newMember)
-                            if (newMember.className):
-                                className = newMember.className
 
                     m = re.match("//@\\s+extends\\s+([A-Za-z0-9]+)", l)
                     if m:
@@ -93,6 +95,8 @@ def findMembersInCppFile(fn):
 
     if className[0] == 'F':
         classType = 'struct'
+    elif className[0] == 'E':
+        classType = 'enum'
     else:
         classType = 'class'
 
@@ -119,6 +123,10 @@ def findMembersInCppFile(fn):
 
     ret += '};\n'
     print(ret)
+
+    tfn = fn.replace('Private', 'Public').replace('.cpp', '.h')
+    print(tfn)
+
     sys.exit()
     return members
 

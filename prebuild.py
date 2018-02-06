@@ -145,9 +145,18 @@ def findMembersInCppFile(fn):
 
     if not isClassFile: return None
 
+    memberNames = [x.name for x in members]
+    print(memberNames)
+
+    getterSetterImpls = ''
+
     for mem in members:
         if mem.generateGetter:
-            members.append(ClassMember('FUNCTION', cppType=mem.cppType, name='Get' + mem.name, access='public', isConst=False))
+            getterName = 'Get' + mem.name
+            members.append(ClassMember('FUNCTION', cppType=mem.cppType, name=getterName, access='public', isConst=False))
+            if not getterName in memberNames:
+                getterSetterImpls += '{retTyp} {className}::{getterName}(){{ return {name}; }}\n'.format(retTyp=mem.cppType, className=className, getterName=getterName, name=mem.name)
+
 
     print('extends ' + ', '.join(extends))
 
@@ -198,7 +207,8 @@ def findMembersInCppFile(fn):
 #define prop(x)
 #define extends(x)
 #define fun         {className}
-""".format(className=className)
+{getterSetterImpls}
+""".format(className=className, getterSetterImpls=getterSetterImpls)
 
 
     with open(tfn, 'w', newline='') as f:

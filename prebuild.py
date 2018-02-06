@@ -134,8 +134,23 @@ def findMembersInCppFile(fn):
     tfn = fn.replace('Private', 'Public').replace('.cpp', '.h')
     print(tfn)
 
-    sys.exit()
-    return members
+    with open(tfn, 'w', newline='') as f:
+        f.write(ret)
+
+    tfn = fn.replace('Private', 'Public').replace('.cpp', '.prebuild.h')
+
+    pbt = """
+#define public
+#define private
+#define protected
+#define prop(x)
+#define extends(x)
+#define fun         {className}
+    """
+
+
+    with open(tfn, 'w', newline='') as f:
+        f.write(pbt)
 
 
 targetName = sys.argv[1]

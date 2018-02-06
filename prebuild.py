@@ -13,29 +13,45 @@ import tempfile
 
 class ClassMember:
     def __init__(self, typ, cppType, name, access, isConst, className = None, mods = None, args = None):
-        self.type = typ
+        self.type = str(typ)
         self.cppType = cppType
         self.name = name
         self.isConst = isConst
+        self.generateGetter = 'G' in access
+        self.generateSetter = 'S' in access
 
         if not mods: mods = ''
 
         modList = []
         if mods: modList = [x.strip() for x in mods.split(' ')]
-        if not 'BlueprintPure' in mods:
-            modList.append('BlueprintCallable')
+
+        if self.type == 'PROPERTY':
+            modList.append('SaveGame')
+
+        if self.type == 'FUNCTION':
+            if not 'BlueprintPure' in mods:
+                modList.append('BlueprintCallable')
+
         self.mods = ', '.join(modList)
         self.args = args
         self.className = className
-        self.access = access
+        self.access = access.replace('G', '').replace('S', '')
+
+
 
 
     def createFromLine(line):
-        m = re.match("//@ ([A-Za-z0-9]+)\\* ([A-Za-z0-9]+)", line)
+        m = re.match("prop\\(((?P<protLevel>private|public|protected)\\s+)?(?P<typ>[A-Za-z0-9*]+)\\s+(?P<name>[A-Za-z0-9*]+)\\)", line)
         if (m):
-            pass
-
-        # (\\s+mods\\((?P<mods>[^)]+)\\))?
+            return ClassMember(
+                typ='PROPERTY',
+                cppType=m.group('typ'),
+                name=m.group('name'),
+                access=m.group('protLevel') if m.group('protLevel') else 'privateGS',
+                isConst=False,
+                className='Class',
+                mods=None,
+                args=None)
 
         m = re.search("(?P<protLevel>private|public|protected)?\\s*((?P<retTyp>[A-Za-z0-9 *]+)?\\s+)?fun::(?P<funcName>[A-Za-z0-9]+)\\s*\\((?P<args>[^)]*)\\)(\\s+mods\\((?P<mods>[^)]+)\\))?", line)
         if (m):
@@ -65,10 +81,13 @@ class ClassMember:
         return arg
 
     def render(self):
-        parts = [ClassMember.transformArgToHeader(x.strip()) for x in self.args.split(',')]
-
         if (self.type == 'FUNCTION'):
+            parts = [ClassMember.transformArgToHeader(x.strip()) for x in self.args.split(',')]
+
             return (('\tUFUNCTION(' + str(self.mods) + ')\n') if self.cppType else '') + '\t' + (str(self.cppType) + ' ' if self.cppType else '') + str(self.name) + '(' + ', '.join(parts) + ')' + (' const' if self.isConst else '') + ';\n'
+        elif self.type == 'PROPERTY':
+            return '\tUPROPERTY({mods})\n\t{cppType} {name};\n'.format(mods=self.mods, cppType=self.cppType, name=self.name)
+
 
     def __str__(self):
         return self.render()

@@ -6,11 +6,6 @@ import pickle
 import shutil
 import tempfile
 
-# To add:
-# Fields
-# Header generation
-# Getter/setter generation
-
 class ClassMember:
     def __init__(self, typ, cppType, name, access, isConst, className = None, mods = None, args = None):
         self.type = str(typ)
@@ -19,7 +14,7 @@ class ClassMember:
         self.isConst = isConst
         self.generateGetter = 'G' in access
         self.generateSetter = 'S' in access
-        self.access = access.replace('G', '').replace('S', '')
+        self.access = access.replace('G', '').replace('S', '').replace('pri', 'private').replace('prot', 'protected').replace('pub', 'public')
 
         if not mods: mods = ''
 
@@ -46,26 +41,26 @@ class ClassMember:
 
 
     def createFromLine(line):
-        m = re.match("prop\\(((?P<protLevel>private|public|protected)\\s+)?(?P<typ>[A-Za-z0-9*]+)\\s+(?P<name>[A-Za-z0-9*]+)\\)", line)
+        m = re.match("prop\\(((?P<protLevel>pri|pub|prot)\\s+)?(?P<typ>[A-Za-z0-9*]+)\\s+(?P<name>[A-Za-z0-9*]+)\\)", line)
         if (m):
             return ClassMember(
                 typ='PROPERTY',
                 cppType=m.group('typ'),
                 name=m.group('name'),
-                access=m.group('protLevel') if m.group('protLevel') else 'privateGS',
+                access=m.group('protLevel') if m.group('protLevel') else 'priGS',
                 isConst=False,
                 className='Class',
                 mods=None,
                 args=None)
 
-        m = re.search("(?P<protLevel>private|public|protected)?\\s*((?P<retTyp>[A-Za-z0-9 *]+)?\\s+)?fun::(?P<funcName>[A-Za-z0-9]+)\\s*\\((?P<args>[^)]*)\\)(\\s+mods\\((?P<mods>[^)]+)\\))?", line)
+        m = re.search("(?P<protLevel>pri|pub|prot)?\\s*((?P<retTyp>[A-Za-z0-9 *]+)?\\s+)?fun::(?P<funcName>[A-Za-z0-9]+)\\s*\\((?P<args>[^)]*)\\)(\\s+mods\\((?P<mods>[^)]+)\\))?", line)
         if (m):
             print('cppType=' + str(m.group('retTyp')))
             return ClassMember(
                 typ='FUNCTION',
                 cppType=m.group('retTyp'),
                 name=m.group('funcName'),
-                access=m.group('protLevel') if m.group('protLevel') else 'public',
+                access=m.group('protLevel') if m.group('protLevel') else 'pub',
                 isConst=False,
                 className='Class',
                 mods=m.group('mods'),
@@ -107,13 +102,14 @@ def findMembersInCppFile(fn):
     print(fn)
 
     tfn = fn.replace('Private', 'Public').replace('.cpp', '.h')
+    if not os.path.isdir(os.path.dirname(tfn)): os.makedirs(os.path.dirname(tfn))
 
-    """try:
+    try:
         if os.path.getmtime(fn) < os.path.getmtime(tfn):
             print('{fn} is not altered'.format(fn=fn))
             return False
     except Exception as ex:
-        print("Error getting mtime: {ex}".format(ex=ex))"""
+        print("Error getting mtime: {ex}".format(ex=ex))
 
     className = re.search('([A-Z0-9a-z]+)\\.cpp', fn).group(1)
 
@@ -153,9 +149,14 @@ def findMembersInCppFile(fn):
     for mem in members:
         if mem.generateGetter:
             getterName = 'Get' + mem.name
-            members.append(ClassMember('FUNCTION', cppType=mem.cppType, name=getterName, access='public', isConst=False))
+            members.append(ClassMember('FUNCTION', cppType=mem.cppType, name=getterName, access='pub', isConst=False, mods='BlueprintPure'))
             if not getterName in memberNames:
                 getterSetterImpls += '{retTyp} {className}::{getterName}(){{ return {name}; }}\n'.format(retTyp=mem.cppType, className=className, getterName=getterName, name=mem.name)
+        if mem.generateSetter:
+            setterName = 'Set' + mem.name
+            members.append(ClassMember('FUNCTION', cppType='void', name=setterName, access='pub', isConst=False, args='{retTyp} value'.format(retTyp=mem.cppType)))
+            if not setterName in memberNames:
+                getterSetterImpls += 'void {className}::{setterName}({retTyp} value){{ {name} = value; }}\n'.format(retTyp=mem.cppType, className=className, setterName=setterName, name=mem.name)
 
 
     print('extends ' + ', '.join(extends))
@@ -201,9 +202,10 @@ def findMembersInCppFile(fn):
 
     pbt = """
 #define mods(x)
-#define public
-#define private
-#define protected
+#define im(x)
+#define pub
+#define pri
+#define prot
 #define prop(x)
 #define extends(x)
 #define fun         {className}

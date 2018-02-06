@@ -24,6 +24,9 @@ class ClassMember:
         if self.type == 'PROPERTY':
             modList.append('SaveGame')
 
+            if (self.access == 'public'):
+                modList.append('BlueprintReadWrite')
+
         if self.type == 'FUNCTION':
             if not 'BlueprintPure' in mods:
                 modList.append('BlueprintCallable')

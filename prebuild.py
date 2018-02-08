@@ -151,6 +151,7 @@ def findMembersInCppFile(fn):
 
     extends = []
     isClassFile = False
+    classMods = ''
 
     try:
         with open(fn) as f:
@@ -172,6 +173,10 @@ def findMembersInCppFile(fn):
                     m = re.match('blueprintEvent\\((?P<event>[^)]+)\\)', l)
                     if m:
                         members.append(ClassMember('FUNCTION', cppType='void', name=m.group(1), access='public', isConst=False, mods='BlueprintImplementableEvent'))
+
+                    m = re.match('classMods\\((?P<mods>[^)]+)\\)', l)
+                    if m:
+                        classMods = m.group('mods')
     except Exception as ex:
         print("Error parsing CPP: " + str(ex))
 
@@ -219,7 +224,7 @@ def findMembersInCppFile(fn):
     ret += '#include "' + className[1:] + '.generated.h"\n'
 
     ret += '\n'
-    ret += 'U' + classType.upper() + '()\n'
+    ret += 'U' + classType.upper() + '(' + classMods + ')\n'
     ret += classType + ' ' + prjName.upper() + '_API ' + className + ' : public ' + ', '.join(extends) + '\n'
     ret += '{\n'
     ret += '\tGENERATED_BODY()\n'
@@ -250,6 +255,7 @@ def findMembersInCppFile(fn):
 #define blueprintEvent(...)
 #define prop(...)
 #define extends(...)
+#define classMods(...)
 #define fun         {className}
 {getterSetterImpls}
 """.format(className=className, getterSetterImpls=getterSetterImpls)

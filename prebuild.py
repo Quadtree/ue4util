@@ -349,7 +349,7 @@ def fixSourceFile(fn):
             headersToAdd.append(header)
 
     if headersToAdd:
-        tfn = fn.replace('Private', 'Public').replace('.cpp', '.prebuild.h')
+        tfn = fn.replace('Private', 'Public').replace('.cpp', '.ac.h')
 
         if (os.path.exists(tfn)):
             with open(tfn, 'a', newline='') as f:

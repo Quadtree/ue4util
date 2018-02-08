@@ -6,6 +6,9 @@ import pickle
 import shutil
 import tempfile
 
+# TODO: Static methods
+# TODO: Special UCLASS mods
+
 class ClassMember:
     def __init__(self, typ, cppType, name, access, isConst, className = None, mods = None, args = None, bare=False):
         self.type = str(typ)

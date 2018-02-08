@@ -16,6 +16,7 @@ class ClassMember:
         self.name = name
         self.isConst = isConst
         self.bare = bare
+        self.isStatic = False
 
         if not mods: mods = ''
 
@@ -30,6 +31,10 @@ class ClassMember:
         if 'bare' in modList:
             modList.remove('bare')
             self.bare = True
+
+        if 'static' in modList:
+            modList.remove('static')
+            self.isStatic = True
 
         self.generateGetter = 'G' in access
         self.generateSetter = 'S' in access
@@ -102,7 +107,13 @@ class ClassMember:
             except Exception:
                 parts = []
 
-            return (('\tUFUNCTION(' + str(self.mods) + ')\n') if self.cppType and not self.bare else '') + '\t' + (str(self.cppType) + ' ' if self.cppType else '') + str(self.name) + '(' + ', '.join(parts) + ')' + (' const' if self.isConst else '') + ';\n'
+            ret = ''
+            if self.cppType and not self.bare:
+                ret += '\tUFUNCTION({mods})\n'.format(mods=self.mods)
+
+
+            ret += '\t' + (str(self.cppType) + ' ' if self.cppType else '') + str(self.name) + '(' + ', '.join(parts) + ')' + (' const' if self.isConst else '') + ';\n'
+            return ret
         elif self.type == 'PROPERTY':
             ret = ''
             if self.cppType[0] != 'F' and not self.bare:

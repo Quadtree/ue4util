@@ -226,7 +226,7 @@ def findMembersInCppFile(fn):
     with open(tfn, 'w', newline='') as f:
         f.write(ret)
 
-    tfn = fn.replace('Private', 'Public').replace('.cpp', '.prebuild.h')
+    tfn = fn.replace('Private', 'Public').replace('.cpp', '.ac.h')
 
     pbt = """
 #define mods(...)

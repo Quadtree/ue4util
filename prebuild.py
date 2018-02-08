@@ -15,14 +15,25 @@ class ClassMember:
         self.cppType = cppType
         self.name = name
         self.isConst = isConst
-        self.generateGetter = 'G' in access
-        self.generateSetter = 'S' in access
-        self.access = access.replace('G', '').replace('S', '').replace('pri', 'private').replace('prot', 'protected').replace('pub', 'public')
+        self.bare = bare
 
         if not mods: mods = ''
 
         modList = []
         if mods: modList = [x.strip() for x in mods.split(' ')]
+
+        for accessLevel in ['private', 'protected', 'public', 'privateGS', 'protectedGS', 'publicGS']:
+            if accessLevel in modList:
+                self.access = accessLevel
+                modList.remove(accessLevel)
+
+        if 'bare' in modList:
+            modList.remove('bare')
+            self.bare = True
+
+        self.generateGetter = 'G' in access
+        self.generateSetter = 'S' in access
+        self.access = access.replace('G', '').replace('S', '')
 
         if self.type == 'PROPERTY':
             modList.append('SaveGame')
@@ -37,40 +48,37 @@ class ClassMember:
             if (self.access == 'private' and 'BlueprintCallable' in modList):
                 modList.remove('BlueprintCallable')
 
-
         self.mods = ', '.join(modList)
         self.args = args
         self.className = className
-        self.bare = bare
-        print('bare={bare}'.format(bare=bare))
 
     def createFromLine(line):
-        m = re.match("prop\\((?P<bare>bare\\s+)?((?P<protLevel>pri|pub|prot)\\s+)?(?P<typ>[A-Za-z0-9 *<>,]+)\\s+(?P<name>[A-Za-z0-9*]+)\\)", line)
+        m = re.match("prop\\(((?P<mods>[^)]+?)\\s+)?(?P<typ>[A-Za-z0-9]+(<[^>]+>)?\\s*\\*?)\\s+(?P<name>[A-Za-z0-9*]+)\\)", line)
         if (m):
             return ClassMember(
                 typ='PROPERTY',
                 cppType=m.group('typ'),
                 name=m.group('name'),
-                access=m.group('protLevel') if m.group('protLevel') else 'priGS',
+                access='privateGS',
                 isConst=False,
                 className='Class',
-                mods=None,
+                mods=m.group('mods'),
                 args=None,
-                bare=True if m.group('bare') else False)
+                bare=False)
 
-        m = re.search("(?P<bare>bare\\s+)?(?P<protLevel>pri|pub|prot)?\\s*((?P<retTyp>[A-Za-z0-9 *<>,]+)?\\s+)?fun::(?P<funcName>[A-Za-z0-9]+)\\s*\\((?P<args>[^)]*)\\)(\\s+mods\\((?P<mods>[^)]+)\\))?", line)
+        m = re.search("(mods\\((?P<mods>[^)]+)\\)\\s+)?((?P<retTyp>[A-Za-z0-9 *<>,]+)?\\s+)?fun::(?P<funcName>[A-Za-z0-9]+)\\s*\\((?P<args>[^)]*)\\)", line)
         if (m):
             print('cppType=' + str(m.group('retTyp')))
             return ClassMember(
                 typ='FUNCTION',
                 cppType=m.group('retTyp'),
                 name=m.group('funcName'),
-                access=m.group('protLevel') if m.group('protLevel') else 'pub',
+                access='public',
                 isConst=False,
                 className='Class',
                 mods=m.group('mods'),
                 args=m.group('args'),
-                bare=True if m.group('bare') else False)
+                bare=False)
 
     def transformArgToHeader(arg):
         if 'class' in arg or 'struct' in arg: return arg
@@ -147,7 +155,7 @@ def findMembersInCppFile(fn):
 
                     m = re.match('blueprintEvent\\((?P<event>[^)]+)\\)', l)
                     if m:
-                        members.append(ClassMember('FUNCTION', cppType='void', name=m.group(1), access='pub', isConst=False, mods='BlueprintImplementableEvent'))
+                        members.append(ClassMember('FUNCTION', cppType='void', name=m.group(1), access='public', isConst=False, mods='BlueprintImplementableEvent'))
     except Exception as ex:
         print("Error parsing CPP: " + str(ex))
 
@@ -161,12 +169,12 @@ def findMembersInCppFile(fn):
     for mem in members:
         if mem.generateGetter:
             getterName = 'Get' + mem.name
-            members.append(ClassMember('FUNCTION', cppType=mem.cppType, name=getterName, access='pub', isConst=False, mods='BlueprintPure'))
+            members.append(ClassMember('FUNCTION', cppType=mem.cppType, name=getterName, access='public', isConst=False, mods='BlueprintPure'))
             if not getterName in memberNames:
                 getterSetterImpls += '{retTyp} {className}::{getterName}(){{ return {name}; }}\n'.format(retTyp=mem.cppType, className=className, getterName=getterName, name=mem.name)
         if mem.generateSetter:
             setterName = 'Set' + mem.name
-            members.append(ClassMember('FUNCTION', cppType='void', name=setterName, access='pub', isConst=False, args='{retTyp} value'.format(retTyp=mem.cppType)))
+            members.append(ClassMember('FUNCTION', cppType='void', name=setterName, access='public', isConst=False, args='{retTyp} value'.format(retTyp=mem.cppType)))
             if not setterName in memberNames:
                 getterSetterImpls += 'void {className}::{setterName}({retTyp} value){{ {name} = value; }}\n'.format(retTyp=mem.cppType, className=className, setterName=setterName, name=mem.name)
 
@@ -224,10 +232,6 @@ def findMembersInCppFile(fn):
 #define mods(...)
 #define im(...)
 #define blueprintEvent(...)
-#define pub
-#define pri
-#define prot
-#define bare
 #define prop(...)
 #define extends(...)
 #define fun         {className}

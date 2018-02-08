@@ -111,8 +111,13 @@ class ClassMember:
             if self.cppType and not self.bare:
                 ret += '\tUFUNCTION({mods})\n'.format(mods=self.mods)
 
+            ret += '\t{static}{cppType}{name}({parts});\n'.format(
+                static=('static ' if self.isStatic else ''),
+                cppType=(str(self.cppType) + ' ' if self.cppType else ''),
+                name=str(self.name),
+                parts=', '.join(parts)
+            )
 
-            ret += '\t' + (str(self.cppType) + ' ' if self.cppType else '') + str(self.name) + '(' + ', '.join(parts) + ')' + (' const' if self.isConst else '') + ';\n'
             return ret
         elif self.type == 'PROPERTY':
             ret = ''

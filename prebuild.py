@@ -17,16 +17,22 @@ class ClassMember:
         self.isConst = isConst
         self.bare = bare
         self.isStatic = False
+        self.access = access
 
         if not mods: mods = ''
 
         modList = []
         if mods: modList = [x.strip() for x in mods.split(' ')]
 
-        for accessLevel in ['private', 'protected', 'public', 'privateGS', 'protectedGS', 'publicGS']:
+        print('modList=' + str(modList))
+
+        for accessLevel in ['privateGS', 'protectedGS', 'publicGS', 'private', 'protected', 'public']:
             if accessLevel in modList:
                 self.access = accessLevel
                 modList.remove(accessLevel)
+                break
+
+        print('access=' + self.access + ',type=' + self.type)
 
         if 'bare' in modList:
             modList.remove('bare')
@@ -36,15 +42,24 @@ class ClassMember:
             modList.remove('static')
             self.isStatic = True
 
-        self.generateGetter = 'G' in access
-        self.generateSetter = 'S' in access
-        self.access = access.replace('G', '').replace('S', '')
+        self.generateGetter = 'G' in self.access
+        self.generateSetter = 'S' in self.access
+        self.access = self.access.replace('G', '').replace('S', '')
 
         if self.type == 'PROPERTY':
             modList.append('SaveGame')
 
-            if (self.access == 'public'):
+            if self.access == 'public':
                 modList.append('BlueprintReadWrite')
+
+                if ('Component' in cppType):
+                    modList.append('VisibleAnywhere')
+                else:
+                    modList.append('EditAnywhere')
+            else:
+                print("NOT PUBLIC '{access}' != 'public'".format(access=self.access))
+
+        print('modList=' + str(modList))
 
         if self.type == 'FUNCTION':
             if not 'BlueprintPure' in mods and not 'BlueprintImplementableEvent' in mods:
@@ -191,12 +206,12 @@ def findMembersInCppFile(fn):
         if mem.generateGetter:
             getterName = 'Get' + mem.name
             members.append(ClassMember('FUNCTION', cppType=mem.cppType, name=getterName, access='public', isConst=False, mods='BlueprintPure'))
-            if not getterName in memberNames:
+            if getterName not in memberNames:
                 getterSetterImpls += '{retTyp} {className}::{getterName}(){{ return {name}; }}\n'.format(retTyp=mem.cppType, className=className, getterName=getterName, name=mem.name)
         if mem.generateSetter:
             setterName = 'Set' + mem.name
             members.append(ClassMember('FUNCTION', cppType='void', name=setterName, access='public', isConst=False, args='{retTyp} value'.format(retTyp=mem.cppType)))
-            if not setterName in memberNames:
+            if setterName not in memberNames:
                 getterSetterImpls += 'void {className}::{setterName}({retTyp} value){{ {name} = value; }}\n'.format(retTyp=mem.cppType, className=className, setterName=setterName, name=mem.name)
 
     print('extends ' + ', '.join(extends))

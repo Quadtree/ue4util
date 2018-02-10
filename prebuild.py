@@ -6,9 +6,6 @@ import pickle
 import shutil
 import tempfile
 
-# TODO: Static methods
-# TODO: Special UCLASS mods
-
 class ClassMember:
     def __init__(self, typ, cppType, name, access, isConst, className = None, mods = None, args = None, bare=False):
         self.type = str(typ)
@@ -101,9 +98,10 @@ class ClassMember:
                 bare=False)
 
     def transformArgToHeader(arg):
-        if 'class' in arg or 'struct' in arg: return arg
-
+        if 'class' in arg or 'struct' in arg or 'enum' in arg: return arg
         if (len(arg) == 0): return arg
+
+        arg = arg.strip()
 
         if '*' in arg:
             if arg[0] == 'F':
@@ -139,7 +137,9 @@ class ClassMember:
             if self.cppType[0] != 'F' and not self.bare:
                 ret += '\tUPROPERTY({mods})\n'.format(mods=self.mods)
 
-            ret += '\t{cppType} {name};\n'.format(cppType=self.cppType, name=self.name)
+            arg = ClassMember.transformArgToHeader('{cppType} {name}'.format(cppType=self.cppType, name=self.name))
+
+            ret += '\t{arg};\n'.format(arg=arg)
             return ret
 
 

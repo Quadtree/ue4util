@@ -5,6 +5,7 @@ import re
 import pickle
 import shutil
 import tempfile
+import depfinder
 
 class ClassMember:
     def __init__(self, typ, cppType, name, access, isConst, className = None, mods = None, args = None, bare=False):
@@ -148,7 +149,7 @@ class ClassMember:
 
 
 
-def findMembersInCppFile(fn):
+def generateHeaderForCppFile(fn):
     members = []
     print(fn)
 
@@ -233,7 +234,7 @@ def findMembersInCppFile(fn):
     ret += '#include "EngineMinimal.h"\n'
     for ext in defDependentClasses:
         try:
-            ret += '#include "' + findClassHeader(ext) + '"\n'
+            ret += '#include "' + depfinder.findClassHeader(ext) + '"\n'
         except Exception as ex:
             print("Can't find header for class {name}: {ex}".format(name=ext, ex=ex))
     ret += '#include "' + className[1:] + '.generated.h"\n'
@@ -275,9 +276,11 @@ def findMembersInCppFile(fn):
 {getterSetterImpls}
 """.format(className=className, getterSetterImpls=getterSetterImpls)
 
-
     with open(tfn, 'w', newline='') as f:
         f.write(pbt)
+
+        for header in depfinder.findDependentHeaders(fn):
+            f.write('#include "{header}"\n'.format(header=header))
 
     return True
 
@@ -288,131 +291,7 @@ prjDir = sys.argv[2]
 
 prjName = targetName.replace('Editor', '')
 
-headerMap = None
-
 print("prjName=" + prjName + " targetName=" + targetName + " engineDir=" + engineDir + " prjFile=" + prjDir)
-
-def fixSourceFile(fn):
-    includedFiles = []
-    classes = []
-    lastIncludeLine = -1
-
-    foundLogStatement = False
-    foundWindowsLineEndings = False
-    foundTrailingWhitespace = False
-    isCppFile = fn.endswith('.cpp')
-
-    fns = []
-    if isCppFile:
-        if not findMembersInCppFile(fn):
-            return
-
-    fns.append(fn)
-
-    for theFn in fns:
-        try:
-            with open(theFn, newline='') as f:
-                ln = 0
-                for l in f:
-                    if isCppFile:
-                        for m in re.finditer('#include\s+"([^"]+?/?([^/"]+))"', l):
-                            includedFiles.append(m.group(1))
-                            lastIncludeLine = ln
-
-                        for m in re.finditer('[A-Z][A-Za-z0-9]+', l):
-                            classes.append(m.group(0))
-
-                        if 'UE_LOG' in l: foundLogStatement = True
-
-                    if '\r\n' in l: foundWindowsLineEndings = True
-                    if re.match('[\\t ]\\s*$', l):
-                        foundTrailingWhitespace = True
-                        print("Found trailing whitespace in " + fn)
-
-
-                    ln += 1
-        except Exception as ex:
-            print("Header loader error? " + str(ex))
-
-    #print(includedFiles)
-    #print(classes)
-
-    headersToAdd = []
-
-    if foundLogStatement and (prjName + '.h'):
-        headersToAdd.append(prjName + '.h')
-
-    for clazz in classes:
-        header = findClassHeader(clazz)
-
-        if header and header not in headersToAdd and header:
-            headersToAdd.append(header)
-
-    if headersToAdd:
-        tfn = fn.replace('Private', 'Public').replace('.cpp', '.ac.h')
-
-        if (os.path.exists(tfn)):
-            with open(tfn, 'a', newline='') as f:
-                for header in headersToAdd:
-                    f.write('#include "{header}"\n'.format(header=header))
-
-
-def scanHeadersIn(dir):
-    ret = {}
-    for fn in os.listdir(dir):
-        fullName = os.path.join(dir, fn)
-
-        if os.path.isdir(fullName):
-            for (k,v) in scanHeadersIn(fullName).items():
-                ret[k] = v
-        try:
-            if fullName.endswith('.h'):
-                with open(fullName) as f:
-                    for l in f:
-                        if ';' not in l:
-                            for m in re.finditer('^(?:class|struct)[^:]*\s([A-Z][A-Za-z0-9]+)\s', l):
-                                ret[m.group(1)] = fullName.replace('\\', '/')
-        except Exception:
-            print("Error")
-
-    return ret
-
-
-def findClassHeader(className):
-    global headerMap
-
-    if headerMap == None:
-        headerMap = {}
-        for (k,v) in scanHeadersIn(os.path.join(prjDir, 'Source')).items():
-            m = re.match('.+' + prjName + '(\\\\|/)(.+)', v)
-            if m:
-                headerMap[k] = m.group(2)
-
-        print(headerMap)
-
-        cacheFileName = os.path.join(prjDir, '.prebuild.cache')
-        engineMap = {}
-
-        try:
-            with open(cacheFileName, 'rb') as f: engineMap = pickle.load(f)
-        except Exception as ex:
-            print("Rebuilding engine header cache because " + str(ex))
-            for (k,v) in scanHeadersIn(os.path.join(engineDir, 'Source')).items():
-                m = re.match('.+(Public|Classes)/(.+)', v)
-
-                if m:
-                    engineMap[k] = m.group(2)
-
-            with open(cacheFileName, 'wb') as f:
-                pickle.dump(engineMap, f)
-
-        for (k,v) in engineMap.items():
-            headerMap[k] = v
-
-    if className in headerMap:
-        return headerMap[className]
-
-    return None
 
 def fixSourceFilesIn(dir):
     for fn in os.listdir(dir):
@@ -422,7 +301,7 @@ def fixSourceFilesIn(dir):
             fixSourceFilesIn(fullName)
 
         if fullName.endswith('.cpp') or fullName.endswith('.h'):
-            fixSourceFile(fullName)
+            generateHeaderForCppFile(fullName)
 
 fixSourceFilesIn(os.path.join(prjDir, 'Source'))
 

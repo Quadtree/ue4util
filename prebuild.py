@@ -300,8 +300,11 @@ def fixSourceFilesIn(dir):
         if os.path.isdir(fullName):
             fixSourceFilesIn(fullName)
 
-        if fullName.endswith('.cpp') or fullName.endswith('.h'):
-            generateHeaderForCppFile(fullName)
+        if fullName.endswith('.cpp'):
+            try:
+                generateHeaderForCppFile(fullName)
+            except Exception as e:
+                print('Failed to generate for {fullName}: {e}'.format(fullName=fullName, e=e))
 
 fixSourceFilesIn(os.path.join(prjDir, 'Source'))
 

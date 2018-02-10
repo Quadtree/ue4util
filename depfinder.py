@@ -59,7 +59,7 @@ def findClassHeader(className):
 
     return None
 
-def findDependentHeaders(cppFile):
+def findDependentHeaders(fn):
     includedFiles = []
     classes = []
     lastIncludeLine = -1

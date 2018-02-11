@@ -1,4 +1,6 @@
 import os
+import re
+import curprj
 
 headerMap = None
 
@@ -28,14 +30,14 @@ def findClassHeader(className):
 
     if headerMap == None:
         headerMap = {}
-        for (k,v) in scanHeadersIn(os.path.join(prjDir, 'Source')).items():
-            m = re.match('.+' + prjName + '(\\\\|/)(.+)', v)
+        for (k,v) in scanHeadersIn(os.path.join(curprj.prjDir, 'Source')).items():
+            m = re.match('.+' + curprj.prjName + '(\\\\|/)(.+)', v)
             if m:
                 headerMap[k] = m.group(2)
 
         print(headerMap)
 
-        cacheFileName = os.path.join(prjDir, '.prebuild.cache')
+        cacheFileName = os.path.join(curprj.prjDir, '.prebuild.cache')
         engineMap = {}
 
         try:
@@ -70,10 +72,6 @@ def findDependentHeaders(fn):
     isCppFile = fn.endswith('.cpp')
 
     fns = []
-    if isCppFile:
-        if not generateHeaderForCppFile(fn):
-            return
-
     fns.append(fn)
 
     for theFn in fns:
@@ -103,8 +101,8 @@ def findDependentHeaders(fn):
 
     headersToAdd = []
 
-    if foundLogStatement and (prjName + '.h'):
-        headersToAdd.append(prjName + '.h')
+    if foundLogStatement and (curprj.prjName + '.h'):
+        headersToAdd.append(curprj.prjName + '.h')
 
     for clazz in classes:
         header = findClassHeader(clazz)

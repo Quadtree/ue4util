@@ -7,14 +7,15 @@ import shutil
 import tempfile
 import depfinder
 import headergen
+import curprj
 
 def main():
-    targetName = sys.argv[1]
-    engineDir = sys.argv[3]
-    prjDir = sys.argv[2]
+    curprj.targetName = sys.argv[1]
+    curprj.engineDir = sys.argv[3]
+    curprj.prjDir = sys.argv[2]
 
-    prjName = targetName.replace('Editor', '')
-    print("prjName=" + prjName + " targetName=" + targetName + " engineDir=" + engineDir + " prjFile=" + prjDir)
+    curprj.prjName = curprj.targetName.replace('Editor', '')
+    print("prjName=" + curprj.prjName + " targetName=" + curprj.targetName + " engineDir=" + curprj.engineDir + " prjFile=" + curprj.prjDir)
 
     def fixSourceFilesIn(dir):
         for fn in os.listdir(dir):
@@ -24,12 +25,9 @@ def main():
                 fixSourceFilesIn(fullName)
 
             if fullName.endswith('.cpp'):
-                try:
-                    headergen.generateHeaderForCppFile(fullName)
-                except Exception as e:
-                    print('Failed to generate for {fullName}: {e}'.format(fullName=fullName, e=e))
+                headergen.generateHeaderForCppFile(fullName)
 
-    fixSourceFilesIn(os.path.join(prjDir, 'Source'))
+    fixSourceFilesIn(os.path.join(curprj.prjDir, 'Source'))
 
     print("prebuild complete")
 

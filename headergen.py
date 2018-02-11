@@ -6,6 +6,8 @@ import pickle
 import shutil
 import tempfile
 import depfinder
+import curprj
+import util
 
 class ClassMember:
     def __init__(self, typ, cppType, name, access, isConst, className = None, mods = None, args = None, bare=False):
@@ -156,13 +158,6 @@ def generateHeaderForCppFile(fn):
     tfn = fn.replace('Private', 'Public').replace('.cpp', '.h')
     if not os.path.isdir(os.path.dirname(tfn)): os.makedirs(os.path.dirname(tfn))
 
-    try:
-        if os.path.getmtime(fn) < os.path.getmtime(tfn):
-            print('{fn} is not altered'.format(fn=fn))
-            return False
-    except Exception as ex:
-        print("Error getting mtime: {ex}".format(ex=ex))
-
     className = re.search('([A-Z0-9a-z]+)\\.cpp', fn).group(1)
 
     extends = []
@@ -241,7 +236,7 @@ def generateHeaderForCppFile(fn):
 
     ret += '\n'
     ret += 'U' + classType.upper() + '(' + classMods + ')\n'
-    ret += classType + ' ' + prjName.upper() + '_API ' + className + ' : public ' + ', '.join(extends) + '\n'
+    ret += classType + ' ' + curprj.prjName.upper() + '_API ' + className + ' : public ' + ', '.join(extends) + '\n'
     ret += '{\n'
     ret += '\tGENERATED_BODY()\n'
     lastProtLevel = ''
@@ -277,10 +272,9 @@ def generateHeaderForCppFile(fn):
 """.format(className=className, getterSetterImpls=getterSetterImpls)
 
     for header in depfinder.findDependentHeaders(fn):
-        f.write('#include "{header}"\n'.format(header=header))
+        pbt += '#include "{header}"\n'.format(header=header)
 
-    with open(tfn, 'w', newline='') as f:
-        f.write(pbt)
+    util.replaceIfModified(tfn, pbt)
 
 
 

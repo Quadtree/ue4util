@@ -63,7 +63,10 @@ class ClassMember:
         logging.debug('modList=' + str(modList))
 
         if self.type == 'FUNCTION':
-            if not 'BlueprintPure' in mods and not 'BlueprintImplementableEvent' in mods:
+            if self.access == 'public' and name.startswith('Get') and not (set(modList) & set(['BlueprintCallable', 'BlueprintPure', 'BlueprintImplementableEvent'])):
+                modList.append('BlueprintPure')
+
+            if not (set(['BlueprintImplementableEvent', 'BlueprintPure']) & set(modList)):
                 modList.append('BlueprintCallable')
 
             if (self.access == 'private' and 'BlueprintCallable' in modList):
@@ -128,9 +131,12 @@ class ClassMember:
             if self.cppType and not self.bare:
                 ret += '\tUFUNCTION({mods})\n'.format(mods=self.mods)
 
+            typeString = ClassMember.transformArgToHeader(str(self.cppType) + ' ' if self.cppType else '')
+            if typeString: typeString += ' '
+
             ret += '\t{static}{cppType}{name}({parts});\n'.format(
                 static=('static ' if self.isStatic else ''),
-                cppType=(str(self.cppType) + ' ' if self.cppType else ''),
+                cppType=typeString,
                 name=str(self.name),
                 parts=', '.join(parts)
             )

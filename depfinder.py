@@ -2,6 +2,7 @@ import os
 import re
 import curprj
 import logging
+import pickle
 
 headerMap = None
 
@@ -21,7 +22,7 @@ def scanHeadersIn(dir):
                             for m in re.finditer('^(?:class|struct)[^:]*\s([A-Z][A-Za-z0-9]+)\s', l):
                                 ret[m.group(1)] = fullName.replace('\\', '/')
         except Exception:
-            logging.debug("Error")
+            logging.warning("Error")
 
     return ret
 
@@ -44,8 +45,8 @@ def findClassHeader(className):
         try:
             with open(cacheFileName, 'rb') as f: engineMap = pickle.load(f)
         except Exception as ex:
-            logging.debug("Rebuilding engine header cache because " + str(ex))
-            for (k,v) in scanHeadersIn(os.path.join(engineDir, 'Source')).items():
+            logging.info("Rebuilding engine header cache because " + str(ex))
+            for (k,v) in scanHeadersIn(os.path.join(curprj.engineDir, 'Source')).items():
                 m = re.match('.+(Public|Classes)/(.+)', v)
 
                 if m:
@@ -53,6 +54,8 @@ def findClassHeader(className):
 
             with open(cacheFileName, 'wb') as f:
                 pickle.dump(engineMap, f)
+
+            logging.info("Completed recreation of cache file")
 
         for (k,v) in engineMap.items():
             headerMap[k] = v
@@ -98,7 +101,7 @@ def findDependentHeaders(fn):
 
                     ln += 1
         except Exception as ex:
-            logging.debug("Header loader error? " + str(ex))
+            logging.warning("Header loader error? " + str(ex))
 
     headersToAdd = []
 

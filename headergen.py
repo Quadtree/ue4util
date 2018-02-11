@@ -261,9 +261,7 @@ def generateHeaderForCppFile(fn):
 
 
     logging.debug(tfn)
-
-    with open(tfn, 'w', newline='') as f:
-        f.write(ret)
+    util.replaceIfModified(tfn, ret)
 
     tfn = fn.replace('Private', 'Public').replace('.cpp', '.ac.h')
 

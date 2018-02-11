@@ -2,8 +2,11 @@ import logging
 
 def replaceIfModified(fn, content):
     existingContent = ''
-    with open(fn, newline='\n') as f:
-        existingContent = f.read()
+    try:
+        with open(fn, newline='\n') as f:
+            existingContent = f.read()
+    except FileNotFoundError:
+        pass
 
     if existingContent != content:
         with open(fn, 'w', newline='\n') as f:

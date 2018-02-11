@@ -11,7 +11,7 @@ import curprj
 import logging
 
 def main():
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
     curprj.targetName = sys.argv[1]
     curprj.engineDir = sys.argv[3]

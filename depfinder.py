@@ -19,7 +19,7 @@ def scanHeadersIn(dir):
                 with open(fullName) as f:
                     for l in f:
                         if ';' not in l:
-                            for m in re.finditer('^(?:class|struct)[^:]*\s([A-Z][A-Za-z0-9]+)\s', l):
+                            for m in re.finditer('^(?:class|struct|enum)[^:]*\s([A-Z][A-Za-z0-9]+)\s', l):
                                 ret[m.group(1)] = fullName.replace('\\', '/')
         except Exception:
             logging.warning("Error")

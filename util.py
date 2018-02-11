@@ -9,6 +9,6 @@ def replaceIfModified(fn, content):
         with open(fn, 'w', newline='\n') as f:
             f.write(content)
 
-        logging.info("Wrote new content to file %s", f)
+        logging.info("Wrote new content to file %s", fn)
     else:
-        logging.info("File %s is unchanged", f)
+        logging.info("File %s is unchanged", fn)

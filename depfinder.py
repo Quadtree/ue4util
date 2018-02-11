@@ -1,6 +1,7 @@
 import os
 import re
 import curprj
+import logging
 
 headerMap = None
 
@@ -20,7 +21,7 @@ def scanHeadersIn(dir):
                             for m in re.finditer('^(?:class|struct)[^:]*\s([A-Z][A-Za-z0-9]+)\s', l):
                                 ret[m.group(1)] = fullName.replace('\\', '/')
         except Exception:
-            print("Error")
+            logging.debug("Error")
 
     return ret
 
@@ -35,7 +36,7 @@ def findClassHeader(className):
             if m:
                 headerMap[k] = m.group(2)
 
-        print(headerMap)
+        logging.debug(headerMap)
 
         cacheFileName = os.path.join(curprj.prjDir, '.prebuild.cache')
         engineMap = {}
@@ -43,7 +44,7 @@ def findClassHeader(className):
         try:
             with open(cacheFileName, 'rb') as f: engineMap = pickle.load(f)
         except Exception as ex:
-            print("Rebuilding engine header cache because " + str(ex))
+            logging.debug("Rebuilding engine header cache because " + str(ex))
             for (k,v) in scanHeadersIn(os.path.join(engineDir, 'Source')).items():
                 m = re.match('.+(Public|Classes)/(.+)', v)
 
@@ -92,12 +93,12 @@ def findDependentHeaders(fn):
                     if '\r\n' in l: foundWindowsLineEndings = True
                     if re.match('[\\t ]\\s*$', l):
                         foundTrailingWhitespace = True
-                        print("Found trailing whitespace in " + fn)
+                        logging.debug("Found trailing whitespace in " + fn)
 
 
                     ln += 1
         except Exception as ex:
-            print("Header loader error? " + str(ex))
+            logging.debug("Header loader error? " + str(ex))
 
     headersToAdd = []
 

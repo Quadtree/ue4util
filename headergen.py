@@ -8,6 +8,7 @@ import tempfile
 import depfinder
 import curprj
 import util
+import logging
 
 class ClassMember:
     def __init__(self, typ, cppType, name, access, isConst, className = None, mods = None, args = None, bare=False):
@@ -24,7 +25,7 @@ class ClassMember:
         modList = []
         if mods: modList = [x.strip() for x in mods.split(' ')]
 
-        print('modList=' + str(modList))
+        logging.debug('modList=' + str(modList))
 
         for accessLevel in ['privateGS', 'protectedGS', 'publicGS', 'private', 'protected', 'public']:
             if accessLevel in modList:
@@ -32,7 +33,7 @@ class ClassMember:
                 modList.remove(accessLevel)
                 break
 
-        print('access=' + self.access + ',type=' + self.type)
+        logging.debug('access=' + self.access + ',type=' + self.type)
 
         if 'bare' in modList:
             modList.remove('bare')
@@ -57,9 +58,9 @@ class ClassMember:
                 else:
                     modList.append('EditAnywhere')
             else:
-                print("NOT PUBLIC '{access}' != 'public'".format(access=self.access))
+                logging.debug("NOT PUBLIC '{access}' != 'public'".format(access=self.access))
 
-        print('modList=' + str(modList))
+        logging.debug('modList=' + str(modList))
 
         if self.type == 'FUNCTION':
             if not 'BlueprintPure' in mods and not 'BlueprintImplementableEvent' in mods:
@@ -88,7 +89,7 @@ class ClassMember:
 
         m = re.search("(mods\\((?P<mods>[^)]+)\\)\\s+)?((?P<retTyp>[A-Za-z0-9 *<>,]+)?\\s+)?fun::(?P<funcName>[A-Za-z0-9]+)\\s*\\((?P<args>[^)]*)\\)", line)
         if (m):
-            print('cppType=' + str(m.group('retTyp')))
+            logging.debug('cppType=' + str(m.group('retTyp')))
             return ClassMember(
                 typ='FUNCTION',
                 cppType=m.group('retTyp'),
@@ -153,7 +154,7 @@ class ClassMember:
 
 def generateHeaderForCppFile(fn):
     members = []
-    print(fn)
+    logging.debug(fn)
 
     tfn = fn.replace('Private', 'Public').replace('.cpp', '.h')
     if not os.path.isdir(os.path.dirname(tfn)): os.makedirs(os.path.dirname(tfn))
@@ -189,12 +190,12 @@ def generateHeaderForCppFile(fn):
                     if m:
                         classMods = m.group('mods')
     except Exception as ex:
-        print("Error parsing CPP: " + str(ex))
+        logging.debug("Error parsing CPP: " + str(ex))
 
     if not isClassFile: return None
 
     memberNames = [x.name for x in members]
-    print(memberNames)
+    logging.debug(memberNames)
 
     getterSetterImpls = ''
 
@@ -210,13 +211,13 @@ def generateHeaderForCppFile(fn):
             if setterName not in memberNames:
                 getterSetterImpls += 'void {className}::{setterName}({retTyp} value){{ {name} = value; }}\n'.format(retTyp=mem.cppType, className=className, setterName=setterName, name=mem.name)
 
-    print('extends ' + ', '.join(extends))
+    logging.debug('extends ' + ', '.join(extends))
 
     defDependentClasses = list(extends)
     for mem in members:
         if mem.cppType and mem.cppType[0] == mem.cppType[0].upper() and not '*' in mem.cppType: defDependentClasses.append(mem.cppType)
 
-    print('defDependentClasses={defDependentClasses}'.format(defDependentClasses=defDependentClasses))
+    logging.debug('defDependentClasses={defDependentClasses}'.format(defDependentClasses=defDependentClasses))
 
     if className[0] == 'F':
         classType = 'struct'
@@ -231,7 +232,7 @@ def generateHeaderForCppFile(fn):
         try:
             ret += '#include "' + depfinder.findClassHeader(ext) + '"\n'
         except Exception as ex:
-            print("Can't find header for class {name}: {ex}".format(name=ext, ex=ex))
+            logging.debug("Can't find header for class {name}: {ex}".format(name=ext, ex=ex))
     ret += '#include "' + className[1:] + '.generated.h"\n'
 
     ret += '\n'
@@ -250,10 +251,10 @@ def generateHeaderForCppFile(fn):
         ret += m.render() + '\n'
 
     ret += '};\n'
-    print(ret)
+    logging.debug(ret)
 
 
-    print(tfn)
+    logging.debug(tfn)
 
     with open(tfn, 'w', newline='') as f:
         f.write(ret)

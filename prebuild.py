@@ -8,14 +8,17 @@ import tempfile
 import depfinder
 import headergen
 import curprj
+import logging
 
 def main():
+    logging.basicConfig(level=logging.INFO)
+
     curprj.targetName = sys.argv[1]
     curprj.engineDir = sys.argv[3]
     curprj.prjDir = sys.argv[2]
 
     curprj.prjName = curprj.targetName.replace('Editor', '')
-    print("prjName=" + curprj.prjName + " targetName=" + curprj.targetName + " engineDir=" + curprj.engineDir + " prjFile=" + curprj.prjDir)
+    logging.info("prjName=" + curprj.prjName + " targetName=" + curprj.targetName + " engineDir=" + curprj.engineDir + " prjFile=" + curprj.prjDir)
 
     def fixSourceFilesIn(dir):
         for fn in os.listdir(dir):
@@ -29,6 +32,6 @@ def main():
 
     fixSourceFilesIn(os.path.join(curprj.prjDir, 'Source'))
 
-    print("prebuild complete")
+    logging.info("prebuild complete")
 
 main()

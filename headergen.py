@@ -144,7 +144,7 @@ class ClassMember:
             return ret
         elif self.type == 'PROPERTY':
             ret = ''
-            if self.cppType[0] != 'F' and not self.bare:
+            if not self.bare:
                 ret += '\tUPROPERTY({mods})\n'.format(mods=self.mods)
 
             arg = ClassMember.transformArgToHeader('{cppType} {name}'.format(cppType=self.cppType, name=self.name))

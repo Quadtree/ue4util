@@ -19,6 +19,7 @@ class ClassMember:
         self.bare = bare
         self.isStatic = False
         self.access = access
+        self.isOverride = False
 
         if not mods: mods = ''
 
@@ -48,7 +49,8 @@ class ClassMember:
         self.access = self.access.replace('G', '').replace('S', '')
 
         if self.type == 'PROPERTY':
-            modList.append('SaveGame')
+            if 'UDataTable' not in self.cppType:
+                modList.append('SaveGame')
 
             if self.access == 'public':
                 modList.append('BlueprintReadWrite')
@@ -122,6 +124,9 @@ class ClassMember:
 
     def render(self):
         if (self.type == 'FUNCTION'):
+            if self.isOverride:
+                self.bare = True
+
             try:
                 parts = [ClassMember.transformArgToHeader(x.strip()) for x in self.args.split(',')]
             except Exception:
@@ -134,11 +139,16 @@ class ClassMember:
             typeString = ClassMember.transformArgToHeader(str(self.cppType) + ' ' if self.cppType else '')
             if typeString: typeString += ' '
 
-            ret += '\t{static}{cppType}{name}({parts});\n'.format(
+            override = ''
+            if self.isOverride:
+                override = ' override'
+
+            ret += '\t{static}{cppType}{name}({parts}){override};\n'.format(
                 static=('static ' if self.isStatic else ''),
                 cppType=typeString,
                 name=str(self.name),
-                parts=', '.join(parts)
+                parts=', '.join(parts),
+                override=override
             )
 
             return ret
@@ -170,6 +180,8 @@ def generateHeaderForCppFile(fn):
     extends = []
     isClassFile = False
     classMods = ''
+    isInFunction = False
+    currentFunction = None
 
     try:
         with open(fn) as f:
@@ -187,6 +199,16 @@ def generateHeaderForCppFile(fn):
 
                         if newMember:
                             members.append(newMember)
+
+                            if newMember.type == 'FUNCTION': currentFunction = newMember
+
+                    if l.startswith('}'):
+                        logging.debug("End of function")
+                        currentFunction = None
+
+                    if 'Super::' in l and currentFunction:
+                        logging.debug("Found Super::")
+                        currentFunction.isOverride = True
 
                     m = re.match('blueprintEvent\\((?P<event>[^)]+)\\)', l)
                     if m:

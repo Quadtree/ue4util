@@ -39,9 +39,36 @@ def main():
     if m:
         engine_path = m.group(1)
 
+    logging.info(f'engine_path={engine_path}')
 
-    logging.info(out)
-    logging.info(engine_path)
+    curprj.targetName = project_file_name.replace('.uproject', '')
+    curprj.engineDir = engine_path
+    curprj.prjDir = '.'
+
+    curprj.prjName = curprj.targetName
+    logging.info("prjName=" + curprj.prjName + " targetName=" + curprj.targetName + " engineDir=" + curprj.engineDir + " prjFile=" + curprj.prjDir)
+
+    last_fix = {}
+
+    while(True):
+        def fixSourceFilesIn(dir):
+            for fn in os.listdir(dir):
+                fullName = os.path.join(dir, fn)
+
+                if os.path.isdir(fullName):
+                    fixSourceFilesIn(fullName)
+
+                if fullName.endswith('.cpp'):
+                    nmt = os.path.getmtime(fullName)
+                    cmt = last_fix[fullName] if fullName in last_fix else None
+
+                    if nmt != cmt:
+                        headergen.generateHeaderForCppFile(fullName)
+                        last_fix[fullName] = nmt
+
+            time.sleep(0.5)
+
+        fixSourceFilesIn(os.path.join(curprj.prjDir, 'Source'))
 
 main()
 

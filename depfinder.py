@@ -65,7 +65,7 @@ def findClassHeader(className):
 
     return None
 
-def findDependentHeaders(fn):
+def findDependentHeaders(fn, class_name_filter='[A-Z][A-Za-z0-9]+'):
     includedFiles = []
     classes = []
     lastIncludeLine = -1
@@ -88,7 +88,7 @@ def findDependentHeaders(fn):
                             includedFiles.append(m.group(1))
                             lastIncludeLine = ln
 
-                        for m in re.finditer('[A-Z][A-Za-z0-9]+', l):
+                        for m in re.finditer(class_name_filter, l):
                             classes.append(m.group(0))
 
                         if 'UE_LOG' in l: foundLogStatement = True

@@ -261,6 +261,10 @@ def generateHeaderForCppFile(fn):
             ret += '#include "' + depfinder.findClassHeader(ext) + '"\n'
         except Exception as ex:
             logging.info("Can't find header for class {name}: {ex}".format(name=ext, ex=ex))
+
+    for header in depfinder.findDependentHeaders(fn, 'E[A-Za-z0-9]+'):
+        ret += '#include "{header}"\n'.format(header=header)
+
     ret += '#include "' + className[1:] + '.generated.h"\n'
 
     ret += '\n'

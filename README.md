@@ -11,3 +11,4 @@ Directives:
   * `bare` - Do not define this a UPROPERTY
 * `classMods(mods)` - What modifications to apply to the class.
 * `fun` - Goes in function definitions like `void fun::someFunction(){ ... }`
+  * Note that if this function calls Super:: in its body, it will be automatically defined as "override"

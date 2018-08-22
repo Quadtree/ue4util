@@ -1,6 +1,12 @@
 import logging
+import os
 
 def replaceIfModified(fn, content):
+    if not os.path.exists(os.path.dirname(fn)):
+        dir_name = os.path.dirname(fn)
+        logging.info(f'Directory {dir_name} does not exist, creating')
+        os.makedirs(dir_name)
+
     existingContent = ''
     try:
         with open(fn, newline='\n') as f:

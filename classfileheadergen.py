@@ -9,6 +9,7 @@ import depfinder
 import curprj
 import util
 import logging
+from classmember import ClassMember
 
 def generate_class_file_header(fn, members, tfn, className, extends, classMods):
     memberNames = [x.name for x in members]

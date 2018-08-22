@@ -37,7 +37,7 @@ def main():
     m = re.search('REG_SZ\\s+([^\\r\\n]+)', out.decode('utf8'))
 
     if m:
-        engine_path = m.group(1)
+        engine_path = m.group(1) + '/Engine'
 
     logging.info(f'engine_path={engine_path}')
 

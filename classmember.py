@@ -54,13 +54,14 @@ class ClassMember:
 
             if self.access == 'public':
                 modList.append('BlueprintReadWrite')
-
-                if ('Component' in cppType):
-                    modList.append('VisibleAnywhere')
-                else:
-                    modList.append('EditAnywhere')
             else:
                 logging.debug("NOT PUBLIC '{access}' != 'public'".format(access=self.access))
+
+            # Currently, just assume that everything can be changed in the editor
+            if ('Component' in cppType):
+                modList.append('VisibleAnywhere')
+            else:
+                modList.append('EditAnywhere')
 
         logging.debug('modList=' + str(modList))
 

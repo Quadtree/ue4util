@@ -88,9 +88,10 @@ def generate_class_file_header(fn, members, tfn, className, extends, classMods):
 #define prop(...)
 #define extends(...)
 #define classMods(...)
+#define Super       {extends}
 #define fun         {className}
 {getterSetterImpls}
-""".format(className=className, getterSetterImpls=getterSetterImpls)
+""".format(className=className, getterSetterImpls=getterSetterImpls, extends=extends[0])
 
     for header in depfinder.findDependentHeaders(fn):
         pbt += '#include "{header}"\n'.format(header=header)

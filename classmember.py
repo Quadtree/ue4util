@@ -154,9 +154,13 @@ class ClassMember:
 
             return ret
         elif self.type == 'PROPERTY':
+            mods = self.mods
+            if self.generateGetter: mods += f', BlueprintGetter=Get{self.name}'
+            if self.generateSetter: mods += f', BlueprintSetter=Set{self.name}'
+
             ret = ''
             if not self.bare:
-                ret += '\tUPROPERTY({mods})\n'.format(mods=self.mods)
+                ret += f'\tUPROPERTY({mods})\n'
 
             arg = ClassMember.transformArgToHeader('{cppType} {name}'.format(cppType=self.cppType, name=self.name))
 

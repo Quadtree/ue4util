@@ -12,3 +12,20 @@ Directives:
 * `classMods(mods)` - What modifications to apply to the class.
 * `fun` - Goes in function definitions like `void fun::someFunction(){ ... }`
   * Note that if this function calls Super:: in its body, it will be automatically defined as "override"
+
+Using in MSVC:
+
+Create a script like this:
+
+    #/bin/sh
+    python3 'F:\Data\Documents\scripts\ue4util\watch.py'
+
+Run it like this
+
+    ./watch.sh &
+
+Stop it like this
+
+    kill %1
+
+After creating a function, MSVC will not immediately recognize it. To force intellisense to re-enumerate the members of the class, put your cursor right after the fun:: and press Ctrl+Space. After a few moments, it should recognize the new function.

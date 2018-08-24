@@ -20,12 +20,12 @@ def generate_class_file_header(fn, members, tfn, className, extends, classMods):
     for mem in members:
         if mem.generateGetter:
             getterName = 'Get' + mem.name
-            members.append(ClassMember('FUNCTION', cppType=mem.cppType, name=getterName, access='public', isConst=False, mods='BlueprintPure'))
+            members.append(ClassMember('FUNCTION', cppType=mem.cppType, name=getterName, access='public', isConst=False, mods='BlueprintGetter'))
             if getterName not in memberNames:
                 getterSetterImpls += '{retTyp} {className}::{getterName}(){{ return {name}; }}\n'.format(retTyp=mem.cppType, className=className, getterName=getterName, name=mem.name)
         if mem.generateSetter:
             setterName = 'Set' + mem.name
-            members.append(ClassMember('FUNCTION', cppType='void', name=setterName, access='public', isConst=False, args='{retTyp} value'.format(retTyp=mem.cppType)))
+            members.append(ClassMember('FUNCTION', cppType='void', name=setterName, access='public', isConst=False, args='{retTyp} value'.format(retTyp=mem.cppType), mods='BlueprintSetter'))
             if setterName not in memberNames:
                 getterSetterImpls += 'void {className}::{setterName}({retTyp} value){{ {name} = value; }}\n'.format(retTyp=mem.cppType, className=className, setterName=setterName, name=mem.name)
 

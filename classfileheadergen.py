@@ -50,7 +50,7 @@ def generate_class_file_header(fn, members, tfn, className, extends, classMods):
         try:
             ret += '#include "' + depfinder.findClassHeader(ext) + '"\n'
         except Exception as ex:
-            logging.info("During processing of {className}, can't find header for class {name}: {ex}".format(className=className, name=ext, ex=ex))
+            logging.debug("During processing of {className}, can't find header for class {name}: {ex}".format(className=className, name=ext, ex=ex))
 
     for header in depfinder.findDependentHeaders(fn, 'E[A-Za-z0-9]+'):
         ret += '#include "{header}"\n'.format(header=header)

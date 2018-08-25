@@ -62,7 +62,6 @@ def main():
 
                     if fullName.endswith('.cpp'):
                         headergen.generateHeaderForCppFile(fullName)
-                        last_fix[fullName] = nmt
 
             fixSourceFilesIn(os.path.join(curprj.prjDir, 'Source'))
         except Exception as ex:

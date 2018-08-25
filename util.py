@@ -20,7 +20,7 @@ def replaceIfModified(fn, content):
 
         logging.info("Wrote new content to file %s", fn)
     else:
-        logging.info("File %s is unchanged", fn)
+        logging.debug("File %s is unchanged", fn)
 
 def split_list(list_str):
     parts = list_str.split(' ')

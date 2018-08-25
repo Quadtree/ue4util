@@ -51,7 +51,7 @@ def findClassHeader(className):
             if m:
                 headerMap[k] = m.group(2)
 
-        logging.info(headerMap)
+        logging.debug(headerMap)
 
         if not engine_map_cache:
             cacheFileName = os.path.join(curprj.prjDir, '.prebuild.cache')

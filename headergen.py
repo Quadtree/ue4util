@@ -13,68 +13,89 @@ import classfileheadergen
 import enumfileheadergen
 from classmember import ClassMember
 
+file_data_cache = {}
+
 def generateHeaderForCppFile(fn):
-    members = []
-    logging.debug(fn)
+    cur_mtime = os.path.getmtime(fn)
+    old_mtime = file_data_cache[fn]['mtime'] if fn in file_data_cache else 0
 
-    tfn = fn.replace('Private', 'Public').replace('.cpp', '.h')
-    if not os.path.isdir(os.path.dirname(tfn)): os.makedirs(os.path.dirname(tfn))
+    if cur_mtime > old_mtime:
+        members = []
+        logging.debug(fn)
 
-    className = re.search('([A-Z0-9a-z]+)\\.cpp', fn).group(1)
+        tfn = fn.replace('Private', 'Public').replace('.cpp', '.h')
+        if not os.path.isdir(os.path.dirname(tfn)): os.makedirs(os.path.dirname(tfn))
 
-    extends = []
-    isClassFile = False
-    classMods = ''
-    isInFunction = False
-    currentFunction = None
-    is_enum_file = False
-    enum_values = []
+        className = re.search('([A-Z0-9a-z]+)\\.cpp', fn).group(1)
 
-    try:
-        with open(fn) as f:
-            for l in f:
-                m = re.match('extends\\s*\\(([^)]+)\\)', l)
-                if m:
-                    if m.group(1)[0] in ['U', 'E', 'F', 'T', 'A']:
-                        className = m.group(1)[0] + className
-                    extends = m.group(1).split(' ')
-                    isClassFile = True
+        extends = []
+        isClassFile = False
+        classMods = ''
+        isInFunction = False
+        currentFunction = None
+        is_enum_file = False
+        enum_values = []
 
-                if isClassFile:
-                    if (re.match("\\S.+", l)):
-                        newMember = ClassMember.createFromLine(l)
-
-                        if newMember:
-                            members.append(newMember)
-
-                            if newMember.type == 'FUNCTION': currentFunction = newMember
-
-                    if l.startswith('}'):
-                        logging.debug("End of function")
-                        currentFunction = None
-
-                    if 'Super::' in l and currentFunction:
-                        logging.debug("Found Super::")
-                        currentFunction.isOverride = True
-
-                    m = re.match('blueprintEvent\\((?P<event>[^)]+)\\)', l)
+        try:
+            with open(fn) as f:
+                for l in f:
+                    m = re.match('extends\\s*\\(([^)]+)\\)', l)
                     if m:
-                        members.append(ClassMember('FUNCTION', cppType='void', name=m.group(1), access='public', isConst=False, mods='BlueprintImplementableEvent'))
+                        if m.group(1)[0] in ['U', 'E', 'F', 'T', 'A']:
+                            className = m.group(1)[0] + className
+                        extends = m.group(1).split(' ')
+                        isClassFile = True
 
-                    m = re.match('classMods\\((?P<mods>.+)\\)', l)
+                    if isClassFile:
+                        if (re.match("\\S.+", l)):
+                            newMember = ClassMember.createFromLine(l)
+
+                            if newMember:
+                                members.append(newMember)
+
+                                if newMember.type == 'FUNCTION': currentFunction = newMember
+
+                        if l.startswith('}'):
+                            logging.debug("End of function")
+                            currentFunction = None
+
+                        if 'Super::' in l and currentFunction:
+                            logging.debug("Found Super::")
+                            currentFunction.isOverride = True
+
+                        m = re.match('blueprintEvent\\((?P<event>[^)]+)\\)', l)
+                        if m:
+                            members.append(ClassMember('FUNCTION', cppType='void', name=m.group(1), access='public', isConst=False, mods='BlueprintImplementableEvent'))
+
+                        m = re.match('classMods\\((?P<mods>.+)\\)', l)
+                        if m:
+                            classMods = util.join_list(util.split_list(m.group('mods')))
+
+                    m = re.match('enumValue\\((?P<value>[^)]+)\\)', l)
                     if m:
-                        classMods = util.join_list(util.split_list(m.group('mods')))
+                        is_enum_file = True
+                        enum_values.append(m.group('value'))
+        except Exception as ex:
+            logging.error("Error parsing CPP: " + str(ex))
 
-                m = re.match('enumValue\\((?P<value>[^)]+)\\)', l)
-                if m:
-                    is_enum_file = True
-                    enum_values.append(m.group('value'))
-    except Exception as ex:
-        logging.error("Error parsing CPP: " + str(ex))
+        file_data_cache[fn] = {
+            'members': members,
+            'className': className,
+            'extends': extends,
+            'classMods': classMods,
+            'enum_values': enum_values,
+            'mtime': cur_mtime,
+            'isClassFile': isClassFile,
+            'is_enum_file': is_enum_file,
+            'tfn': tfn,
+        }
 
-    if isClassFile: return classfileheadergen.generate_class_file_header(fn, members, tfn, className, extends, classMods)
-    if is_enum_file: return enumfileheadergen.generate_enum_file_header(fn, enum_values, tfn, className, classMods)
+    d = file_data_cache[fn]
 
-    logging.info("Cannot generate header for " + fn)
+
+    if d['isClassFile']: return classfileheadergen.generate_class_file_header(fn, list(d['members']), d['tfn'], d['className'], d['extends'], d['classMods'])
+    if d['is_enum_file']: return enumfileheadergen.generate_enum_file_header(fn, list(d['enum_values']), d['tfn'], d['className'], d['classMods'])
+
+    logging.debug("Cannot generate header for " + fn)
 
     return None

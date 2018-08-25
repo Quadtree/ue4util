@@ -82,6 +82,10 @@ def generate_class_file_header(fn, members, tfn, className, extends, classMods):
     tfn = fn.replace('Private', 'Public').replace('.cpp', '.ac.h')
 
     pbt = """
+#ifdef fun
+    #undef fun
+#endif
+
 #define mods(...)
 #define im(...)
 #define blueprintEvent(...)

@@ -80,7 +80,7 @@ class ClassMember:
         self.className = className
 
     def createFromLine(line):
-        m = re.match("prop\\(((?P<mods>[^)]+?)\\s+)?(?P<typ>[A-Za-z0-9]+(<[^>]+>)?\\s*\\*?)\\s+(?P<name>[A-Za-z0-9*]+)\\)", line)
+        m = re.match("prop\\(((?P<mods>[^)]+?)\\s+)?(?P<typ>[A-Za-z0-9]+(<[^>]+>)?(<[^<]*<[^>]+>[^>]*>)?\\s*\\*?)\\s+(?P<name>[A-Za-z0-9*]+)\\)", line)
         if (m):
             return ClassMember(
                 typ='PROPERTY',

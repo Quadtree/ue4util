@@ -21,3 +21,13 @@ def replaceIfModified(fn, content):
         logging.info("Wrote new content to file %s", fn)
     else:
         logging.info("File %s is unchanged", fn)
+
+def split_list(list_str):
+    parts = list_str.split(' ')
+
+    parts_stripped = map(lambda s: s.strip(', '), parts)
+
+    return filter(lambda s: len(str(s)) > 0, parts_stripped)
+
+def join_list(list):
+    return ', '.join(list)

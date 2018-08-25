@@ -63,7 +63,7 @@ def generateHeaderForCppFile(fn):
 
                     m = re.match('classMods\\((?P<mods>.+)\\)', l)
                     if m:
-                        classMods = ', '.join(filter(lambda x: len(x) > 0, m.group('mods').split(' ')))
+                        classMods = util.join_list(util.split_list(m.group('mods')))
 
                 m = re.match('enumValue\\((?P<value>[^)]+)\\)', l)
                 if m:

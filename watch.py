@@ -48,8 +48,6 @@ def main():
     curprj.prjName = curprj.targetName
     logging.info("prjName=" + curprj.prjName + " targetName=" + curprj.targetName + " engineDir=" + curprj.engineDir + " prjFile=" + curprj.prjDir)
 
-    last_fix = {}
-
     while(True):
         start_time = time.perf_counter()
         try:
@@ -63,13 +61,8 @@ def main():
                         fixSourceFilesIn(fullName)
 
                     if fullName.endswith('.cpp'):
-                        nmt = os.path.getmtime(fullName)
-                        cmt = last_fix[fullName] if fullName in last_fix else None
-
-                        if nmt != cmt:
-                            logging.info(f'Regenerating header for {fullName}')
-                            headergen.generateHeaderForCppFile(fullName)
-                            last_fix[fullName] = nmt
+                        headergen.generateHeaderForCppFile(fullName)
+                        last_fix[fullName] = nmt
 
             fixSourceFilesIn(os.path.join(curprj.prjDir, 'Source'))
         except Exception as ex:

@@ -44,6 +44,7 @@ class ClassMember:
         if 'static' in modList:
             modList.remove('static')
             self.isStatic = True
+            self.bare = True
 
         if 'virtual' in modList:
             modList.remove('virtual')

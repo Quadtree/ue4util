@@ -20,6 +20,7 @@ class ClassMember:
         self.isStatic = False
         self.access = access
         self.isOverride = False
+        self.isVirtual = False
 
         if not mods: mods = ''
 
@@ -43,6 +44,14 @@ class ClassMember:
         if 'static' in modList:
             modList.remove('static')
             self.isStatic = True
+
+        if 'virtual' in modList:
+            modList.remove('virtual')
+            self.isVirtual = True
+
+        if 'override' in modList:
+            modList.remove('override')
+            self.isOverride = True
 
         self.generateGetter = 'G' in self.access
         self.generateSetter = 'S' in self.access
@@ -80,7 +89,7 @@ class ClassMember:
         self.className = className
 
     def createFromLine(line):
-        m = re.match("prop\\(((?P<mods>[^)]+?)\\s+)?(?P<typ>[A-Za-z0-9]+(<[^>]+>)?(<[^<]*<[^>]+>[^>]*>)?\\s*\\*?)\\s+(?P<name>[A-Za-z0-9*]+)\\)", line)
+        m = re.match("prop\\(((?P<mods>[^)]+?)\\s+)?(?P<typ>[A-Za-z0-9:]+(<[^>]+>)?(<[^<]*<[^>]+>[^>]*>)?\\s*\\*?)\\s+(?P<name>[A-Za-z0-9*]+)\\)", line)
         if (m):
             return ClassMember(
                 typ='PROPERTY',
@@ -144,8 +153,9 @@ class ClassMember:
             if self.isOverride:
                 override = ' override'
 
-            ret += '\t{static}{cppType}{name}({parts}){override}{const};\n'.format(
+            ret += '\t{static}{virtual}{cppType}{name}({parts}){override}{const};\n'.format(
                 static=('static ' if self.isStatic else ''),
+                virtual=('virtual ' if self.isVirtual else ''),
                 cppType=typeString,
                 name=str(self.name),
                 parts=', '.join(parts),

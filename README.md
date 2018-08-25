@@ -9,9 +9,14 @@ Directives:
 * `blueprintEvent(functionName)` - Creates a new member that is a blueprint implementable event.
 * `prop(mods type propertyName)` - Creates a new property. Mods are the usual ones like BlueprintReadWrite or something. There are a few special ones:
   * `bare` - Do not define this a UPROPERTY
-* `classMods(mods)` - What modifications to apply to the class.
-* `fun` - Goes in function definitions like `void fun::someFunction(){ ... }`
+* `classMods(mods)` - What modifications to apply to the class. Space separated
+* `fun` - Goes in function definitions like `mods(...) void fun::someFunction(){ ... }`
   * Note that if this function calls Super:: in its body, it will be automatically defined as "override"
+  * Mods can be:
+    * `bare`: Do not set UFUNCTION
+    * `virtual`: Set virtual on function definition
+    * Any normal UFUNCTION modifier
+    * Mods should be space separated
 
 Using in MSVC:
 

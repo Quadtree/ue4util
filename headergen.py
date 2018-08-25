@@ -61,9 +61,9 @@ def generateHeaderForCppFile(fn):
                     if m:
                         members.append(ClassMember('FUNCTION', cppType='void', name=m.group(1), access='public', isConst=False, mods='BlueprintImplementableEvent'))
 
-                    m = re.match('classMods\\((?P<mods>[^)]+)\\)', l)
+                    m = re.match('classMods\\((?P<mods>.+)\\)', l)
                     if m:
-                        classMods = m.group('mods')
+                        classMods = ', '.join(m.group('mods').split(' '))
 
                 m = re.match('enumValue\\((?P<value>[^)]+)\\)', l)
                 if m:

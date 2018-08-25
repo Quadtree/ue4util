@@ -63,14 +63,14 @@ def generateHeaderForCppFile(fn):
 
                     m = re.match('classMods\\((?P<mods>.+)\\)', l)
                     if m:
-                        classMods = ', '.join(m.group('mods').split(' '))
+                        classMods = ', '.join(filter(lambda x: len(x) > 0, m.group('mods').split(' ')))
 
                 m = re.match('enumValue\\((?P<value>[^)]+)\\)', l)
                 if m:
                     is_enum_file = True
                     enum_values.append(m.group('value'))
     except Exception as ex:
-        logging.info("Error parsing CPP: " + str(ex))
+        logging.error("Error parsing CPP: " + str(ex))
 
     if isClassFile: return classfileheadergen.generate_class_file_header(fn, members, tfn, className, extends, classMods)
     if is_enum_file: return enumfileheadergen.generate_enum_file_header(fn, enum_values, tfn, className, classMods)

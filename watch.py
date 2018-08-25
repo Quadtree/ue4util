@@ -52,6 +52,8 @@ def main():
 
     while(True):
         try:
+            depfinder.headerMap = None
+
             def fixSourceFilesIn(dir):
                 for fn in os.listdir(dir):
                     fullName = os.path.join(dir, fn)

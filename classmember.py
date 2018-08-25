@@ -93,15 +93,16 @@ class ClassMember:
                 args=None,
                 bare=False)
 
-        m = re.search("(mods\\((?P<mods>[^)]+)\\)\\s+)?((?P<retTyp>[A-Za-z0-9 &*<>,]+)?\\s+)?fun::(?P<funcName>[A-Za-z0-9]+)\\s*\\((?P<args>[^)]*)\\)", line)
+        m = re.search("(mods\\((?P<mods>[^)]+)\\)\\s+)?((?P<retTyp>[A-Za-z0-9 &*<>,]+)?\\s+)?fun::(?P<funcName>[A-Za-z0-9]+)\\s*\\((?P<args>[^)]*)\\)(\s+(?P<const>const))?", line)
         if (m):
+            logging.info(f'isConst={m.group("const")}')
             logging.debug('cppType=' + str(m.group('retTyp')))
             return ClassMember(
                 typ='FUNCTION',
                 cppType=m.group('retTyp'),
                 name=m.group('funcName'),
                 access='public',
-                isConst=False,
+                isConst=True if m.group('const') else False,
                 className='Class',
                 mods=m.group('mods'),
                 args=m.group('args'),
@@ -144,12 +145,13 @@ class ClassMember:
             if self.isOverride:
                 override = ' override'
 
-            ret += '\t{static}{cppType}{name}({parts}){override};\n'.format(
+            ret += '\t{static}{cppType}{name}({parts}){override}{const};\n'.format(
                 static=('static ' if self.isStatic else ''),
                 cppType=typeString,
                 name=str(self.name),
                 parts=', '.join(parts),
-                override=override
+                override=override,
+                const=' const' if self.isConst else ''
             )
 
             return ret

@@ -5,6 +5,9 @@ import logging
 import pickle
 
 headerMap = None
+headers_in_cache = {}
+headers_in_mtime = {}
+engine_map_cache = None
 
 def scanHeadersIn(dir):
     ret = {}
@@ -16,19 +19,30 @@ def scanHeadersIn(dir):
                 ret[k] = v
         try:
             if fullName.endswith('.h'):
-                with open(fullName) as f:
-                    for l in f:
-                        if ';' not in l:
-                            for m in re.finditer('^(?:class|struct|enum)[^:]*\s([A-Z][A-Za-z0-9]+)\s', l):
-                                ret[m.group(1)] = fullName.replace('\\', '/')
-        except Exception:
-            logging.warning("Error")
+                mtime = os.path.getmtime(fullName)
+                old_mtime = headers_in_mtime[fullName] if fullName in headers_in_mtime else 0
+
+                if mtime > old_mtime:
+                    logging.info(f'Reloading classes defined in {fullName}')
+                    headers_in_cache[fullName] = {}
+                    headers_in_mtime[fullName] = mtime
+                    with open(fullName) as f:
+                        for l in f:
+                            if ';' not in l:
+                                for m in re.finditer('^(?:class|struct|enum)[^:]*\s([A-Z][A-Za-z0-9]+)\s', l):
+                                    headers_in_cache[fullName][m.group(1)] = fullName.replace('\\', '/')
+
+                for (k,v) in headers_in_cache[fullName].items():
+                    ret[k] = v
+        except Exception as ex:
+            logging.warning(f'Error scanning headers in {dir}: {ex}')
 
     return ret
 
 
 def findClassHeader(className):
     global headerMap
+    global engine_map_cache
 
     if headerMap == None:
         headerMap = {}
@@ -39,23 +53,28 @@ def findClassHeader(className):
 
         logging.info(headerMap)
 
-        cacheFileName = os.path.join(curprj.prjDir, '.prebuild.cache')
-        engineMap = {}
+        if not engine_map_cache:
+            cacheFileName = os.path.join(curprj.prjDir, '.prebuild.cache')
+            engineMap = {}
 
-        try:
-            with open(cacheFileName, 'rb') as f: engineMap = pickle.load(f)
-        except Exception as ex:
-            logging.info("Rebuilding engine header cache because " + str(ex))
-            for (k,v) in scanHeadersIn(os.path.join(curprj.engineDir, 'Source')).items():
-                m = re.match('.+(Public|Classes)/(.+)', v)
+            try:
+                with open(cacheFileName, 'rb') as f: engineMap = pickle.load(f)
+            except Exception as ex:
+                logging.info("Rebuilding engine header cache because " + str(ex))
+                for (k,v) in scanHeadersIn(os.path.join(curprj.engineDir, 'Source')).items():
+                    m = re.match('.+(Public|Classes)/(.+)', v)
 
-                if m:
-                    engineMap[k] = m.group(2)
+                    if m:
+                        engineMap[k] = m.group(2)
 
-            with open(cacheFileName, 'wb') as f:
-                pickle.dump(engineMap, f)
+                with open(cacheFileName, 'wb') as f:
+                    pickle.dump(engineMap, f)
 
-            logging.info("Completed recreation of cache file")
+                logging.info("Completed recreation of cache file")
+
+            engine_map_cache = engineMap
+        else:
+            engineMap = engine_map_cache
 
         for (k,v) in engineMap.items():
             headerMap[k] = v

@@ -95,7 +95,6 @@ class ClassMember:
 
         m = re.search("(mods\\((?P<mods>[^)]+)\\)\\s+)?((?P<retTyp>[A-Za-z0-9 &*<>,]+)?\\s+)?fun::(?P<funcName>[A-Za-z0-9]+)\\s*\\((?P<args>[^)]*)\\)(\s+(?P<const>const))?", line)
         if (m):
-            logging.info(f'isConst={m.group("const")}')
             logging.debug('cppType=' + str(m.group('retTyp')))
             return ClassMember(
                 typ='FUNCTION',

@@ -51,6 +51,7 @@ def main():
     last_fix = {}
 
     while(True):
+        start_time = time.perf_counter()
         try:
             depfinder.headerMap = None
 
@@ -66,14 +67,18 @@ def main():
                         cmt = last_fix[fullName] if fullName in last_fix else None
 
                         if nmt != cmt:
+                            logging.info(f'Regenerating header for {fullName}')
                             headergen.generateHeaderForCppFile(fullName)
                             last_fix[fullName] = nmt
-
-                time.sleep(0.5)
 
             fixSourceFilesIn(os.path.join(curprj.prjDir, 'Source'))
         except Exception as ex:
             print(f'Error while watching: {ex}')
+
+        end_time = time.perf_counter()
+        ms = int((end_time - start_time) * 1000)
+        if ms >= 200: logging.info(f'Cycle took {ms}ms')
+        time.sleep(0.5)
 
 main()
 

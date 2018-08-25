@@ -51,24 +51,27 @@ def main():
     last_fix = {}
 
     while(True):
-        def fixSourceFilesIn(dir):
-            for fn in os.listdir(dir):
-                fullName = os.path.join(dir, fn)
+        try:
+            def fixSourceFilesIn(dir):
+                for fn in os.listdir(dir):
+                    fullName = os.path.join(dir, fn)
 
-                if os.path.isdir(fullName):
-                    fixSourceFilesIn(fullName)
+                    if os.path.isdir(fullName):
+                        fixSourceFilesIn(fullName)
 
-                if fullName.endswith('.cpp'):
-                    nmt = os.path.getmtime(fullName)
-                    cmt = last_fix[fullName] if fullName in last_fix else None
+                    if fullName.endswith('.cpp'):
+                        nmt = os.path.getmtime(fullName)
+                        cmt = last_fix[fullName] if fullName in last_fix else None
 
-                    if nmt != cmt:
-                        headergen.generateHeaderForCppFile(fullName)
-                        last_fix[fullName] = nmt
+                        if nmt != cmt:
+                            headergen.generateHeaderForCppFile(fullName)
+                            last_fix[fullName] = nmt
 
-            time.sleep(0.5)
+                time.sleep(0.5)
 
-        fixSourceFilesIn(os.path.join(curprj.prjDir, 'Source'))
+            fixSourceFilesIn(os.path.join(curprj.prjDir, 'Source'))
+        except Exception as ex:
+            print(f'Error while watching: {ex}')
 
 main()
 

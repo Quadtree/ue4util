@@ -93,7 +93,7 @@ class ClassMember:
                 args=None,
                 bare=False)
 
-        m = re.search("(mods\\((?P<mods>[^)]+)\\)\\s+)?((?P<retTyp>[A-Za-z0-9 *<>,]+)?\\s+)?fun::(?P<funcName>[A-Za-z0-9]+)\\s*\\((?P<args>[^)]*)\\)", line)
+        m = re.search("(mods\\((?P<mods>[^)]+)\\)\\s+)?((?P<retTyp>[A-Za-z0-9 &*<>,]+)?\\s+)?fun::(?P<funcName>[A-Za-z0-9]+)\\s*\\((?P<args>[^)]*)\\)", line)
         if (m):
             logging.debug('cppType=' + str(m.group('retTyp')))
             return ClassMember(

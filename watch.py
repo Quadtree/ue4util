@@ -12,6 +12,35 @@ import logging
 import json
 import subprocess
 
+def find_highest_mtime_in(dir):
+    ret = 0
+
+    for fn in os.listdir(dir):
+        full_name = os.path.join(dir, fn)
+        print(full_name)
+
+        if os.path.isdir(full_name):
+            print(f'desc {full_name}')
+            return max(find_highest_mtime_in(full_name), ret)
+
+        if full_name.endswith('.cpp') or full_name.endswith('.h'):
+            try:
+                ret = max(os.path.getmtime(full_name), ret)
+            except Exception as ex:
+                logging.error(f'Error getting mtime {ex}')
+
+    return ret
+
+def fixSourceFilesIn(dir):
+    for fn in os.listdir(dir):
+        fullName = os.path.join(dir, fn)
+
+        if os.path.isdir(fullName):
+            fixSourceFilesIn(fullName)
+
+        if fullName.endswith('.cpp'):
+            headergen.generateHeaderForCppFile(fullName)
+
 def main():
     logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
@@ -48,24 +77,23 @@ def main():
     curprj.prjName = curprj.targetName
     logging.info("prjName=" + curprj.prjName + " targetName=" + curprj.targetName + " engineDir=" + curprj.engineDir + " prjFile=" + curprj.prjDir)
 
+    last_highest_mtime = 0
+
     while(True):
         start_time = time.perf_counter()
         try:
             depfinder.headerMap = None
 
-            def fixSourceFilesIn(dir):
-                for fn in os.listdir(dir):
-                    fullName = os.path.join(dir, fn)
+            trg_dir = os.path.join(curprj.prjDir, 'Source')
+            cur_highest_mtime = find_highest_mtime_in(trg_dir)
+            print(cur_highest_mtime)
 
-                    if os.path.isdir(fullName):
-                        fixSourceFilesIn(fullName)
-
-                    if fullName.endswith('.cpp'):
-                        headergen.generateHeaderForCppFile(fullName)
-
-            fixSourceFilesIn(os.path.join(curprj.prjDir, 'Source'))
+            if cur_highest_mtime > last_highest_mtime:
+                logging.info(f'{cur_highest_mtime} > {last_highest_mtime}, doing run')
+                fixSourceFilesIn(trg_dir)
+                last_highest_mtime = cur_highest_mtime
         except Exception as ex:
-            print(f'Error while watching: {ex}')
+            logging.error(f'Error while watching: {ex}')
 
         end_time = time.perf_counter()
         ms = int((end_time - start_time) * 1000)

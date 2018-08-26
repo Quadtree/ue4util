@@ -12,7 +12,7 @@ import logging
 from classmember import ClassMember
 
 def generate_enum_file_header(fn, enum_values, tfn, className, classMods):
-    logging.info("Generating enum for " + fn + " -> " + tfn)
+    logging.debug("Generating enum for " + fn + " -> " + tfn)
 
     if len(classMods) > 0: classMods += ', '
     classMods += 'BlueprintType'
@@ -29,6 +29,8 @@ enum class E''' + className + ''' : uint8
 
     for v in enum_values:
         out += f'\t{short_name}_{v},\n'
+
+    out += f'\t{short_name}_Max,\n'
 
     out += '};\n'
 

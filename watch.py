@@ -69,7 +69,7 @@ def main():
 
         end_time = time.perf_counter()
         ms = int((end_time - start_time) * 1000)
-        if ms >= 200: logging.info(f'Cycle took {ms}ms')
+        if ms >= 0: logging.info(f'Cycle took {ms}ms')
         time.sleep(0.5)
 
 main()

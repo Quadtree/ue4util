@@ -63,9 +63,10 @@ def generateHeaderForCppFile(fn):
                             logging.debug("Found Super::")
                             currentFunction.isOverride = True
 
-                        m = re.match('blueprintEvent\\((?P<event>[^)]+)\\)', l)
+                        #
+                        m = re.match('blueprintEvent\\((?P<event>[^()]+)(\\((?P<args>[^)]+)\\))?\\)', l)
                         if m:
-                            members.append(ClassMember('FUNCTION', cppType='void', name=m.group(1), access='public', isConst=False, mods='BlueprintImplementableEvent'))
+                            members.append(ClassMember('FUNCTION', cppType='void', name=m.group('event'), access='public', isConst=False, mods='BlueprintImplementableEvent', args=m.group('args')))
 
                         m = re.match('classMods\\((?P<mods>.+)\\)', l)
                         if m:

@@ -17,10 +17,8 @@ def find_highest_mtime_in(trg_dir):
 
     for fn in os.listdir(trg_dir):
         full_name = os.path.join(trg_dir, fn)
-        print(full_name)
 
         if os.path.isdir(full_name):
-            print(f'desc {full_name}')
             ret = max(find_highest_mtime_in(full_name), ret)
 
         if full_name.endswith('.cpp') or full_name.endswith('.h'):
@@ -86,7 +84,6 @@ def main():
 
             trg_dir = os.path.join(curprj.prjDir, 'Source')
             cur_highest_mtime = find_highest_mtime_in(trg_dir)
-            print(cur_highest_mtime)
 
             if cur_highest_mtime > last_highest_mtime:
                 logging.info(f'{cur_highest_mtime} > {last_highest_mtime}, doing run')

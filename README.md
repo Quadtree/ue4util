@@ -34,3 +34,5 @@ Stop it like this
     kill %1
 
 After creating a function, MSVC will not immediately recognize it. To force intellisense to re-enumerate the members of the class, put your cursor right after the fun:: and press Ctrl+Space. After a few moments, it should recognize the new function.
+
+If this technique doesn't work (seems very inconsistent), try putting your cursor on the newly created thing and pressing Ctrl+F12 or F12. This only seems to work reliably on functions, though. For variables, you need to do "this->X".

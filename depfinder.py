@@ -23,7 +23,7 @@ def scanHeadersIn(dir):
                 old_mtime = headers_in_mtime[fullName] if fullName in headers_in_mtime else 0
 
                 if mtime > old_mtime:
-                    logging.info(f'Reloading classes defined in {fullName}')
+                    if engine_map_cache: logging.info(f'Reloading classes defined in {fullName}')
                     headers_in_cache[fullName] = {}
                     headers_in_mtime[fullName] = mtime
                     with open(fullName) as f:

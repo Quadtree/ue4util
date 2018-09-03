@@ -4,7 +4,7 @@ Run this in the root of your project:
 
 Directives:
 
-* `extends(parentName)` - Putting one of these in a cpp file indicates this is a class. The U/A etc will be derived from the parent name.
+* `extends(parentName)` - Putting one of these in a cpp file indicates this is a class. The U/A etc will be derived from the parent name. Note that the value of "FStruct" is special. This denotes a structure with no superclass.
 * `im(className)` - Imports the given class. Doesn't actually do anything, as classes appearing are always imported by default.
 * `blueprintEvent(functionName)` - Creates a new member that is a blueprint implementable event.
 * `prop(mods type propertyName)` - Creates a new property. Mods are the usual ones like BlueprintReadWrite or something. There are a few special ones:

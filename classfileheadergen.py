@@ -59,7 +59,11 @@ def generate_class_file_header(fn, members, tfn, className, extends, classMods):
 
     ret += '\n'
     ret += 'U' + classType.upper() + '(' + classMods + ')\n'
-    ret += classType + ' ' + curprj.prjName.upper() + '_API ' + className + ' : public ' + ', '.join(extends) + '\n'
+    ret += classType + ' ' + curprj.prjName.upper() + '_API ' + className
+
+    # "FStruct" is magical. It tells the system that this is a struct, but not to actually add in the extends syntax, as FStruct does not actually exist
+    if 'FStruct' not in extends: ret += ' : public ' + ', '.join(extends)
+    ret += '\n'
     ret += '{\n'
     ret += '\tGENERATED_BODY()\n'
     lastProtLevel = ''

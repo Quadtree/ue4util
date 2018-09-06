@@ -71,6 +71,10 @@ def generate_class_file_header(fn, members, tfn, className, extends, classMods):
     members.sort(key=lambda x: x.access)
 
     for m in members:
+        # If the class is bare then implicitly all members are too
+        if ('bare' in classMods or (classType == 'struct' and m.type == 'FUNCTION')):
+            m.bare = True
+
         if m.access != lastProtLevel:
             ret += (m.access + ':\n')
             lastProtLevel = m.access

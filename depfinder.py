@@ -9,6 +9,10 @@ headers_in_cache = {}
 headers_in_mtime = {}
 engine_map_cache = None
 
+# Certain classes are always included by default because they're very common
+# We should not perform dependency resolution on them as this usually leads to weird results
+BANNED_CLASSES = ['FTransform']
+
 def scanHeadersIn(dir):
     ret = {}
     for fn in os.listdir(dir):
@@ -30,7 +34,8 @@ def scanHeadersIn(dir):
                         for l in f:
                             if ';' not in l:
                                 for m in re.finditer('^(?:class|struct|enum)[^:]*\s([A-Z][A-Za-z0-9]+)\s', l):
-                                    headers_in_cache[fullName][m.group(1)] = fullName.replace('\\', '/')
+                                    if m.group(1) not in BANNED_CLASSES:
+                                        headers_in_cache[fullName][m.group(1)] = fullName.replace('\\', '/')
 
                 for (k,v) in headers_in_cache[fullName].items():
                     ret[k] = v

@@ -58,7 +58,7 @@ class ClassMember:
         self.access = self.access.replace('G', '').replace('S', '')
 
         if self.type == 'PROPERTY':
-            if 'UDataTable' not in self.cppType:
+            if 'UDataTable' not in self.cppType and 'Transient' not in modList:
                 modList.append('SaveGame')
 
             if self.access == 'public':

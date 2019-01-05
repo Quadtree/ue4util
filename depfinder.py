@@ -11,7 +11,7 @@ engine_map_cache = None
 
 # Certain classes are always included by default because they're very common
 # We should not perform dependency resolution on them as this usually leads to weird results
-BANNED_CLASSES = ['FTransform']
+BANNED_CLASSES = ['FTransform', 'FRotation', 'FVector']
 
 def scanHeadersIn(dir):
     ret = {}

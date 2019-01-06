@@ -29,7 +29,7 @@ class ClassMember:
 
         logging.debug('modList=' + str(modList))
 
-        for accessLevel in ['privateGS', 'protectedGS', 'publicGS', 'private', 'protected', 'public']:
+        for accessLevel in ['privateGS', 'protectedGS', 'publicGS', 'privateG', 'protectedG', 'publicG', 'private', 'protected', 'public']:
             if accessLevel in modList:
                 self.access = accessLevel
                 modList.remove(accessLevel)

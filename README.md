@@ -1,9 +1,33 @@
+# Running
 Run this in the root of your project:
 
     python3 '{{path to this project}}\watch.py'
 
-Directives:
+## Using in MSVC
 
+Create a script like this:
+
+    #/bin/sh
+    python3 'F:\Data\Documents\scripts\ue4util\watch.py'
+
+Run it by double clicking on it in Windows Explorer, assuming you have Cygwin set up to run .sh files.
+
+After creating a function, MSVC will not immediately recognize it. To force intellisense to re-enumerate the members of the class, right click and select Rescan -> Rescan File. Since you will be doing this a lot, it's a good idea to bind it to a key. I've used F7 for this purpose.
+
+# Directives
+
+## Header
+At the top of each .cpp file using this, put this:
+
+```cpp
+#include "Y.h"
+#include "X.h"
+#include "X.ac.h"
+```
+
+Where "X" is the .cpp filename, without the .cpp, and "Y" is the name of the project.
+
+## Classes
 * `extends(parentName)` - Putting one of these in a cpp file indicates this is a class. The U/A etc will be derived from the parent name. Note that the value of "FStruct" is special. This denotes a structure with no superclass.
 * `im(className)` - Imports the given class. Doesn't actually do anything, as classes appearing are always imported by default.
 * `blueprintEvent(functionName)` - Creates a new member that is a blueprint implementable event.
@@ -18,21 +42,5 @@ Directives:
     * Any normal UFUNCTION modifier
     * Mods should be space separated
 
-Using in MSVC:
-
-Create a script like this:
-
-    #/bin/sh
-    python3 'F:\Data\Documents\scripts\ue4util\watch.py'
-
-Run it like this
-
-    ./watch.sh &
-
-Stop it like this
-
-    kill %1
-
-After creating a function, MSVC will not immediately recognize it. To force intellisense to re-enumerate the members of the class, put your cursor right after the fun:: and press Ctrl+Space. After a few moments, it should recognize the new function.
-
-If this technique doesn't work (seems very inconsistent), try putting your cursor on the newly created thing and pressing Ctrl+F12 or F12. This only seems to work reliably on functions, though. For variables, you need to do "this->X".
+## Enums
+Create a new .cpp file and put `enumValue(X)` directives, one per line after the usual header.

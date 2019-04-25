@@ -11,6 +11,7 @@ import util
 import logging
 import classfileheadergen
 import enumfileheadergen
+import traceback
 from classmember import ClassMember
 
 file_data_cache = {}
@@ -77,7 +78,7 @@ def generateHeaderForCppFile(fn):
                         is_enum_file = True
                         enum_values.append(m.group('value'))
         except Exception as ex:
-            logging.error("Error parsing CPP: " + str(ex))
+            logging.error("Error parsing CPP: " + str(ex) + '\n' + traceback.format_exc())
 
         file_data_cache[fn] = {
             'members': members,

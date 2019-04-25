@@ -22,7 +22,10 @@ class ClassMember:
         self.isOverride = False
         self.isVirtual = False
 
-        if not mods: mods = ''
+        if mods:
+            self.mods = mods
+        else:
+            self.mods = ''
 
         modList = self.get_mod_list()
 
@@ -159,7 +162,7 @@ class ClassMember:
                 static=('static ' if self.isStatic else ''),
                 virtual=('virtual ' if self.isVirtual else ''),
                 cppType=typeString,
-                name=str(self.name),
+                name=str(self.name).replace('_Implementation', ''),
                 parts=', '.join(parts),
                 override=override,
                 const=' const' if self.isConst else ''

@@ -35,7 +35,6 @@ def generate_class_file_header(fn, members, tfn, className, extends, classMods):
             validator_name = mem.name.replace('_Implementation', '_Validate')
             if validator_name not in memberNames:
                 # The validator MUST exist, so if it's not already a member create a fake one
-                #members.append(ClassMember('FUNCTION', cppType='bool', name=validator_name, access=mem.access, isConst=False, args=mem.args, mods='bare'))
                 getterSetterImpls += f'bool {className}::{validator_name}({mem.args}){{ return true; }}\n'
 
     logging.debug('extends ' + ', '.join(extends))

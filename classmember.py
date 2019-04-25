@@ -24,10 +24,10 @@ class ClassMember:
 
         if mods:
             self.mods = mods
+            modList = [x.strip().strip(',') for x in mods.split(' ')]
         else:
             self.mods = ''
-
-        modList = self.get_mod_list()
+            modList = []
 
         logging.debug('modList=' + str(modList))
 
@@ -90,6 +90,7 @@ class ClassMember:
                 modList.remove('BlueprintCallable')
 
         self.mods = ', '.join(modList)
+        self.mod_list = modList
         self.args = args
         self.className = className
 
@@ -184,8 +185,7 @@ class ClassMember:
             return ret
 
     def get_mod_list(self):
-        if not self.mods: return []
-        return [x.strip() for x in self.mods.split(' ')]
+        return self.mod_list
 
     def __str__(self):
         return self.render()

@@ -17,6 +17,8 @@ def generate_class_file_header(fn, members, tfn, className, extends, classMods):
 
     getterSetterImpls = ''
 
+    replicated_properties = []
+
     for mem in members:
         if mem.generateGetter:
             getterName = 'Get' + mem.name
@@ -36,6 +38,18 @@ def generate_class_file_header(fn, members, tfn, className, extends, classMods):
             if validator_name not in memberNames:
                 # The validator MUST exist, so if it's not already a member create a fake one
                 getterSetterImpls += f'bool {className}::{validator_name}({mem.args}){{ return true; }}\n'
+
+        if 'Replicated' in mem.get_mod_list():
+            replicated_properties.append(mem.name)
+
+    if replicated_properties:
+        getterSetterImpls += '#include "UnrealNetwork.h"\n'
+        getterSetterImpls += 'void fun::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const\n{\n\tSuper::GetLifetimeReplicatedProps(OutLifetimeProps);\n'
+
+        for replicated_property in replicated_properties:
+            getterSetterImpls += f'\tDOREPLIFETIME({className}, {replicated_property});\n'
+
+        getterSetterImpls += '}\n'
 
     logging.debug('extends ' + ', '.join(extends))
 

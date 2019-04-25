@@ -29,6 +29,15 @@ def generate_class_file_header(fn, members, tfn, className, extends, classMods):
                 members.append(ClassMember('FUNCTION', cppType='void', name=setterName, access='public', isConst=False, args='{retTyp} value'.format(retTyp=mem.cppType), mods='BlueprintSetter'))
                 getterSetterImpls += 'void {className}::{setterName}({retTyp} value){{ {name} = value; }}\n'.format(retTyp=mem.cppType, className=className, setterName=setterName, name=mem.name)
 
+        # The "Server" mod means this is a function that is called on the server
+        if 'Server' in mem.get_mod_list():
+            # Figure out what the validator name for this server function is
+            validator_name = mem.name.replace('_Implementation', '_Validate')
+            if validator_name not in memberNames:
+                # The validator MUST exist, so if it's not already a member create a fake one
+                #members.append(ClassMember('FUNCTION', cppType='bool', name=validator_name, access=mem.access, isConst=False, args=mem.args, mods='bare'))
+                getterSetterImpls += f'bool {className}::{validator_name}({mem.args}){{ return true; }}\n'
+
     logging.debug('extends ' + ', '.join(extends))
 
     defDependentClasses = list(extends)

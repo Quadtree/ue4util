@@ -24,8 +24,7 @@ class ClassMember:
 
         if not mods: mods = ''
 
-        modList = []
-        if mods: modList = [x.strip() for x in mods.split(' ')]
+        modList = self.get_mod_list()
 
         logging.debug('modList=' + str(modList))
 
@@ -56,6 +55,9 @@ class ClassMember:
         self.generateGetter = 'G' in self.access
         self.generateSetter = 'S' in self.access
         self.access = self.access.replace('G', '').replace('S', '')
+
+        if 'Server' in modList:
+            modList.append('WithValidation')
 
         if self.type == 'PROPERTY':
             if 'UDataTable' not in self.cppType and 'Transient' not in modList:
@@ -89,7 +91,7 @@ class ClassMember:
         self.className = className
 
     def createFromLine(line):
-        m = re.match("prop\\(((?P<mods>[^)]+?)\\s+)?(?P<typ>[A-Za-z0-9:]+(<[^>]+>)?(<[^<]*<[^>]+>[^>]*>)?\\s*\\*?)\\s+(?P<name>[A-Za-z0-9*]+)\\)", line)
+        m = re.match("prop\\(((?P<mods>[^)]+?)\\s+)?(?P<typ>[A-Za-z0-9_:]+(<[^>]+>)?(<[^<]*<[^>]+>[^>]*>)?\\s*\\*?)\\s+(?P<name>[A-Za-z0-9_*]+)\\)", line)
         if (m):
             return ClassMember(
                 typ='PROPERTY',
@@ -102,7 +104,7 @@ class ClassMember:
                 args=None,
                 bare=False)
 
-        m = re.search("(mods\\((?P<mods>[^)]+)\\)\\s+)?((?P<retTyp>[A-Za-z0-9 &*<>,]+)?\\s+)?fun::(?P<funcName>[A-Za-z0-9]+)\\s*\\((?P<args>[^)]*)\\)(\s+(?P<const>const))?", line)
+        m = re.search("(mods\\((?P<mods>[^)]+)\\)\\s+)?((?P<retTyp>[A-Za-z0-9_ &*<>,]+)?\\s+)?fun::(?P<funcName>[A-Za-z0-9_]+)\\s*\\((?P<args>[^)]*)\\)(\s+(?P<const>const))?", line)
         if (m):
             logging.debug('cppType=' + str(m.group('retTyp')))
             return ClassMember(
@@ -178,6 +180,9 @@ class ClassMember:
             ret += '\t{arg};\n'.format(arg=arg)
             return ret
 
+    def get_mod_list(self):
+        if not self.mods: return []
+        return [x.strip() for x in self.mods.split(' ')]
 
     def __str__(self):
         return self.render()

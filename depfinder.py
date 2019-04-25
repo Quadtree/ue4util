@@ -10,7 +10,7 @@ headers_in_mtime = {}
 engine_map_cache = None
 
 # Do not descend into these directories as they contain weird header files
-BANNED_DIRECTORIES = ['Apeiron']
+BANNED_DIRECTORIES = ['Apeiron', 'Chaos']
 
 def scanHeadersIn(dir):
     for bd in BANNED_DIRECTORIES:

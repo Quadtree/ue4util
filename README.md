@@ -1,17 +1,21 @@
 # Running
 Run this in the root of your project:
 
-    python3 '{{path to this project}}\watch.py'
-
-## Using in MSVC
-
-Create a script like this:
-
     #/bin/sh
-    python3 'F:\Data\Documents\scripts\ue4util\watch.py'
+    python3 '{{path to this project}}\watch.py'
 
 Run it by double clicking on it in Windows Explorer, assuming you have Cygwin set up to run .sh files.
 
+Add this to your build.cs file:
+
+    PublicIncludePaths.Add("{{{ProjectName}}}/Public");
+
+If you don't want to commit the .prebuild data files (they can be regenerated at any time with this tool), add this to your .gitignore:
+
+    .prebuild*
+    Source/{{{ProjectName}}}/Public
+
+## Using in MSVC
 After creating a function, MSVC will not immediately recognize it. To force intellisense to re-enumerate the members of the class, right click and select Rescan -> Rescan File. Since you will be doing this a lot, it's a good idea to bind it to a key. I've used F7 for this purpose.
 
 # Directives
